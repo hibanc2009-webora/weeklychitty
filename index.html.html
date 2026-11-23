@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairali Weekly Chitty & Savings Portal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans Malayalam -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Malayalam:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Canvas Confetti for Lucky Draw -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans Malayalam', 'sans-serif'],
+                    },
+                    colors: {
+                        navy: {
+                            950: '#040B1A',
+                            900: '#0A192F',
+                            800: '#112240',
+                            700: '#1D3557',
+                            600: '#2A4365',
+                        },
+                        gold: {
+                            400: '#FACC15',
+                            500: '#EAB308',
+                            600: '#CA8A04',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar & Animations */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0A192F; }
+        ::-webkit-scrollbar-thumb { background: #1D3557; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #FACC15; }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(250, 204, 21, 0.25); }
+            50% { box-shadow: 0 0 30px rgba(250, 204, 21, 0.6); }
+        }
+        .glow-yellow { animation: pulseGlow 2.5s infinite; }
+
+        @keyframes slotSpin {
+            0% { transform: translateY(-10px); opacity: 0.7; }
+            50% { transform: translateY(10px); opacity: 1; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .slot-animate { animation: slotSpin 0.12s infinite linear; }
+
+        .glass-card {
+            background: rgba(17, 34, 64, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Print Styles for Reports */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-[#040B1A] text-white font-sans antialiased selection:bg-yellow-400 selection:text-navy-950 min-h-screen flex flex-col">
+
+    <!-- GLOBAL TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <div id="confirm-modal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <div class="bg-[#112240] border border-yellow-400/30 rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all">
+            <div class="flex items-center gap-3 text-yellow-400 mb-3">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <h3 id="confirm-title" class="text-xl font-bold text-white">Confirm Action</h3>
+            </div>
+            <p id="confirm-message" class="text-slate-300 text-sm leading-relaxed mb-6">Are you sure you want to proceed?</p>
+            <div class="flex justify-end gap-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-medium text-sm transition">Cancel</button>
+                <button id="confirm-ok-btn" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm shadow-lg transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN MODAL (Password: 9900) -->
+    <div id="admin-login-modal" class="fixed inset-0 z-[85] hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="bg-[#0A192F] border-2 border-yellow-400/50 rounded-2xl max-w-sm w-full p-7 shadow-2xl relative">
+            <button onclick="closeAdminLogin()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-yellow-400/15 border border-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-yellow-400">
+                    <i class="fa-solid fa-shield-halved text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Admin Security Access</h3>
+                <p class="text-xs text-slate-400 mt-1">Enter administrator PIN to unlock full control</p>
+            </div>
+            <form id="admin-login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <input type="password" id="admin-pin-input" maxlength="10" placeholder="Enter Admin Password" required
+                        class="w-full text-center tracking-[0.35em] text-xl font-bold bg-[#112240] border border-slate-600 focus:border-yellow-400 rounded-xl px-4 py-3 text-white outline-none transition">
+                </div>
+                <p id="admin-login-error" class="text-red-400 text-xs text-center hidden font-medium">Incorrect password. Access denied.</p>
+                <button type="submit" class="w-full py-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-navy-950 font-bold text-sm shadow-lg shadow-yellow-400/20 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-unlock-keyhole"></i> Unlock Admin Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOP ANNOUNCEMENT BAR (Editable & Hideable) -->
+    <div id="top-notice-bar" class="bg-yellow-400 text-[#040B1A] text-xs sm:text-sm font-semibold py-2 px-4 text-center relative z-40">
+        <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bullhorn"></i>
+            <span id="ui-notice-text">Weekly Draw takes place every Sunday at 8:00 PM! Ensure payments are cleared before 6:00 PM.</span>
+        </div>
+    </div>
+
+    <!-- MAIN NAVIGATION BAR -->
+    <header class="sticky top-0 z-30 bg-[#0A192F]/95 backdrop-blur-md border-b border-white/10 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+            <!-- Brand / Logo -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchMainView('public')">
+                <img id="ui-brand-logo" src="https://placehold.co/48x48/FACC15/040B1A?text=KC" onerror="this.src='https://placehold.co/48x48/FACC15/040B1A?text=KC'" alt="Logo" class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-cover border border-yellow-400/50 shadow">
+                <div>
+                    <h1 id="ui-site-title" class="text-lg sm:text-xl font-extrabold tracking-tight text-white leading-tight">Kairali Weekly Chitty</h1>
+                    <p id="ui-site-subtitle" class="text-[11px] sm:text-xs text-yellow-400 font-medium">Trusted Community Savings & Lucky Draw</p>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+                <a href="#hero-section" onclick="switchMainView('public')" class="hover:text-yellow-400 transition">Home</a>
+                <a href="#draw-section" onclick="switchMainView('public')" class="hover:text-yellow-400 transition">Lucky Draw</a>
+                <a href="#members-section" onclick="switchMainView('public')" class="hover:text-yellow-400 transition">Members & Status</a>
+                <a href="#pairs-section" onclick="switchMainView('public')" class="hover:text-yellow-400 transition">Paired Members</a>
+                <a href="#winners-section" onclick="switchMainView('public')" class="hover:text-yellow-400 transition">Winners History</a>
+            </nav>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <span id="db-sync-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Connecting...
+                </span>
+
+                <!-- Switch between Public & Admin if logged in -->
+                <button id="toggle-admin-btn" onclick="handleAdminButtonClick()"
+                    class="px-3.5 py-2 rounded-xl bg-[#112240] hover:bg-[#1D3557] text-yellow-400 border border-yellow-400/30 text-xs sm:text-sm font-semibold transition flex items-center gap-2 shadow">
+                    <i class="fa-solid fa-lock text-xs" id="admin-btn-icon"></i>
+                    <span id="admin-btn-text">Admin</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- PUBLIC WEBSITE VIEW                                                   -->
+    <!-- ===================================================================== -->
+    <main id="public-view" class="flex-grow">
+
+        <!-- HERO SECTION -->
+        <section id="hero-section" class="relative overflow-hidden py-12 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-white/10 bg-gradient-to-b from-[#0A192F] via-[#071124] to-[#040B1A]">
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-yellow-400/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-xs font-bold uppercase tracking-wider">
+                        <i class="fa-solid fa-award"></i>
+                        <span id="ui-cycle-badge">Cycle 1 • Week 1 Active</span>
+                    </div>
+                    <h2 id="ui-hero-heading" class="text-3xl sm:text-5xl font-extrabold text-white leading-tight">
+                        Smart Weekly Savings & <span class="text-yellow-400">Transparent Lucky Draw</span>
+                    </h2>
+                    <p id="ui-hero-desc" class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                        Save ₹50 or ₹100 every week with complete transparency. Track live weekly payments, paired memberships, and automated weekly lucky draws in real time.
+                    </p>
+                    <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+                        <a href="#members-section" id="ui-hero-cta1" class="px-6 py-3.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-sm shadow-lg shadow-yellow-400/20 transition flex items-center gap-2">
+                            <i class="fa-solid fa-users"></i> View Member Status
+                        </a>
+                        <a href="#winners-section" id="ui-hero-cta2" class="px-6 py-3.5 rounded-xl bg-[#112240] hover:bg-[#1D3557] text-white border border-white/15 font-semibold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-yellow-400"></i> Winner History
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Live Summary Dashboard Card -->
+                <div class="lg:col-span-5">
+                    <div class="glass-card rounded-2xl p-6 sm:p-7 shadow-2xl border border-yellow-400/20 space-y-6">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+                            <div>
+                                <p class="text-xs text-slate-400 uppercase font-semibold tracking-wider">Current Status</p>
+                                <h3 id="ui-card-week-title" class="text-xl font-bold text-white mt-0.5">Cycle 1 - Week 1</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-yellow-400/15 border border-yellow-400/30 flex items-center justify-center text-yellow-400">
+                                <i class="fa-solid fa-chart-pie text-xl"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-[#0A192F] p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-slate-400">Active Members</p>
+                                <p id="pub-stat-total-members" class="text-2xl font-extrabold text-white mt-1">0</p>
+                            </div>
+                            <div class="bg-[#0A192F] p-4 rounded-xl border border-white/5">
+                                <p class="text-xs text-slate-400">Weekly Pot Value</p>
+                                <p id="pub-stat-weekly-pot" class="text-2xl font-extrabold text-yellow-400 mt-1">₹0</p>
+                            </div>
+                            <div class="bg-[#0A192F] p-4 rounded-xl border border-emerald-500/20">
+                                <p class="text-xs text-emerald-400">Paid This Week</p>
+                                <p id="pub-stat-paid-count" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
+                            </div>
+                            <div class="bg-[#0A192F] p-4 rounded-xl border border-amber-500/20">
+                                <p class="text-xs text-amber-400">Pending Payment</p>
+                                <p id="pub-stat-pending-count" class="text-2xl font-extrabold text-amber-400 mt-1">0</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1.5">
+                                <span class="text-slate-300">Weekly Collection Progress</span>
+                                <span id="pub-stat-progress-text" class="text-yellow-400 font-bold">0%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-[#040B1A] rounded-full overflow-hidden border border-white/10">
+                                <div id="pub-stat-progress-bar" class="h-full bg-gradient-to-r from-yellow-500 to-yellow-300 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LATEST LUCKY DRAW SPOTLIGHT SECTION -->
+        <section id="draw-section" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+            <div class="bg-gradient-to-r from-[#112240] via-[#162C52] to-[#112240] border border-yellow-400/30 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+                    <i class="fa-solid fa-crown text-9xl text-yellow-400"></i>
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+                    <div class="space-y-3 text-center md:text-left">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-400 text-[#040B1A] text-xs font-extrabold uppercase tracking-wider">
+                            <i class="fa-solid fa-star"></i> Latest Lucky Draw Winner
+                        </span>
+                        <h3 id="pub-latest-winner-name" class="text-2xl sm:text-4xl font-extrabold text-white">
+                            No Winner Drawn Yet
+                        </h3>
+                        <p id="pub-latest-winner-meta" class="text-sm sm:text-base text-slate-300">
+                            Stay tuned for the upcoming weekly lucky draw!
+                        </p>
+                    </div>
+                    <div class="bg-[#0A192F]/90 border border-yellow-400/30 rounded-2xl p-5 text-center min-w-[220px] glow-yellow">
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Eligible Pool (This Cycle)</p>
+                        <p id="pub-eligible-pool-count" class="text-3xl font-extrabold text-yellow-400 my-1">0</p>
+                        <p class="text-xs text-slate-300">Members/Units Remaining</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PUBLIC MEMBERS & WEEKLY PAYMENT STATUS SECTION -->
+        <section id="members-section" class="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <h2 id="ui-members-heading" class="text-2xl sm:text-3xl font-extrabold text-white">Members & Weekly Status</h2>
+                    <p id="ui-members-subheading" class="text-sm text-slate-400 mt-1">Real-time weekly payment status and cycle win eligibility</p>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="pub-member-search" oninput="renderPublicMembers()" placeholder="Search member..."
+                            class="bg-[#112240] border border-white/10 focus:border-yellow-400 rounded-xl pl-9 pr-4 py-2 text-sm text-white outline-none w-44 sm:w-56">
+                    </div>
+                    <select id="pub-member-filter" onchange="renderPublicMembers()"
+                        class="bg-[#112240] border border-white/10 focus:border-yellow-400 rounded-xl px-3.5 py-2 text-sm text-white outline-none">
+                        <option value="all">All Status</option>
+                        <option value="Paid">Paid Only</option>
+                        <option value="Pending">Pending Only</option>
+                        <option value="100">₹100/Week</option>
+                        <option value="50">₹50/Week</option>
+                        <option value="paired">Paired Members</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Members Grid -->
+            <div id="pub-members-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- PAIRED MEMBERS SECTION -->
+        <section id="pairs-section" class="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+            <div>
+                <h2 id="ui-pairs-heading" class="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-3">
+                    <i class="fa-solid fa-link text-yellow-400"></i> Paired Members (₹50 + ₹50 = ₹100 Unit)
+                </h2>
+                <p class="text-sm text-slate-400 mt-1">Two ₹50/week members linked together as a single ₹100 draw unit. Prizes are shared per pair agreement.</p>
+            </div>
+
+            <div id="pub-pairs-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- WINNER HISTORY & PREVIOUS CYCLES SECTION -->
+        <section id="winners-section" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 id="ui-winners-heading" class="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-trophy text-yellow-400"></i> Lucky Draw Winners History
+                    </h2>
+                    <p class="text-sm text-slate-400 mt-1">Verified weekly draw results across all cycles</p>
+                </div>
+                <select id="pub-winner-cycle-filter" onchange="renderPublicWinners()"
+                    class="bg-[#112240] border border-white/10 focus:border-yellow-400 rounded-xl px-4 py-2 text-sm text-white outline-none w-fit">
+                    <option value="all">All Cycles</option>
+                </select>
+            </div>
+
+            <div class="bg-[#0A192F] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#112240] text-slate-300 text-xs uppercase tracking-wider border-b border-white/10">
+                                <th class="py-4 px-5">Cycle / Week</th>
+                                <th class="py-4 px-5">Winner Name</th>
+                                <th class="py-4 px-5">Membership Type</th>
+                                <th class="py-4 px-5">Prize / Pot</th>
+                                <th class="py-4 px-5">Draw Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pub-winners-tbody" class="divide-y divide-white/5 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- ADMIN PANEL VIEW (HIDDEN UNTIL UNLOCKED WITH PIN 9900)                -->
+    <!-- ===================================================================== -->
+    <section id="admin-view" class="hidden flex-grow bg-[#040B1A] pb-16">
+        <!-- Admin Top Banner -->
+        <div class="bg-[#112240] border-b border-yellow-400/30 py-4 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-400 text-[#040B1A] flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-white">Master Control Center</h2>
+                        <p class="text-xs text-yellow-400">Full Administrative Access • Auto-Synced to Cloud Database</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button type="button" onclick="saveChangesAndRefreshWebsite()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs transition flex items-center gap-2 shadow">
+                        <i class="fa-solid fa-check-double"></i> Save Changes
+                    </button>
+                    <button onclick="switchMainView('public')" class="px-4 py-2 rounded-xl bg-[#0A192F] hover:bg-slate-800 text-white border border-white/15 text-xs font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-eye"></i> View Public Site
+                    </button>
+                    <button onclick="logoutAdmin()" class="px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white border border-red-500/30 text-xs font-semibold transition flex items-center gap-2">
+                        <i class="fa-solid fa-right-from-bracket"></i> Lock Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div class="flex overflow-x-auto gap-2 pb-2 border-b border-white/10 no-scrollbar">
+                <button onclick="switchAdminTab('dashboard')" data-tab="dashboard" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-yellow-400 text-[#040B1A] transition flex items-center gap-2">
+                    <i class="fa-solid fa-gauge-high"></i> Dashboard
+                </button>
+                <button onclick="switchAdminTab('payments')" data-tab="payments" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-money-bill-wave"></i> Weekly Payments
+                </button>
+                <button onclick="switchAdminTab('members')" data-tab="members" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear"></i> Members
+                </button>
+                <button onclick="switchAdminTab('pairs')" data-tab="pairs" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-link"></i> Pair System
+                </button>
+                <button onclick="switchAdminTab('draw')" data-tab="draw" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-dharmachakra"></i> Lucky Draw & Cycles
+                </button>
+                <button onclick="switchAdminTab('whatsapp')" data-tab="whatsapp" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-brands fa-whatsapp"></i> WhatsApp Center
+                </button>
+                <button onclick="switchAdminTab('reports')" data-tab="reports" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Reports
+                </button>
+                <button onclick="switchAdminTab('cms')" data-tab="cms" class="admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> Site Editor & Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 1: ADMIN DASHBOARD -->
+        <div id="admin-tab-dashboard" class="admin-tab-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <!-- Top KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-5">
+                    <p class="text-xs text-slate-400 font-medium">Total Active Members</p>
+                    <p id="adm-kpi-total-members" class="text-3xl font-extrabold text-white mt-2">0</p>
+                    <p id="adm-kpi-member-breakdown" class="text-[11px] text-slate-400 mt-1">0 ₹100 • 0 ₹50</p>
+                </div>
+                <div class="bg-[#0A192F] border border-emerald-500/30 rounded-2xl p-5">
+                    <p class="text-xs text-emerald-400 font-medium">Paid Members (This Week)</p>
+                    <p id="adm-kpi-paid-members" class="text-3xl font-extrabold text-emerald-400 mt-2">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Cleared for draw</p>
+                </div>
+                <div class="bg-[#0A192F] border border-amber-500/30 rounded-2xl p-5">
+                    <p class="text-xs text-amber-400 font-medium">Pending Members</p>
+                    <p id="adm-kpi-pending-members" class="text-3xl font-extrabold text-amber-400 mt-2">0</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Awaiting payment</p>
+                </div>
+                <div class="bg-[#0A192F] border border-yellow-400/30 rounded-2xl p-5">
+                    <p class="text-xs text-yellow-400 font-medium">Weekly Collected</p>
+                    <p id="adm-kpi-collected-amt" class="text-3xl font-extrabold text-yellow-400 mt-2">₹0</p>
+                    <p id="adm-kpi-expected-amt" class="text-[11px] text-slate-400 mt-1">Out of ₹0 target</p>
+                </div>
+                <div class="bg-[#0A192F] border border-red-500/30 rounded-2xl p-5">
+                    <p class="text-xs text-red-400 font-medium">Pending Collection</p>
+                    <p id="adm-kpi-pending-amt" class="text-3xl font-extrabold text-red-400 mt-2">₹0</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Balance due</p>
+                </div>
+            </div>
+
+            <!-- Middle Overview Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Cycle & Week Control Box -->
+                <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-week text-yellow-400"></i> Active Cycle & Week
+                        </h3>
+                        <span id="adm-dash-cycle-badge" class="px-2.5 py-1 rounded-lg bg-yellow-400/15 text-yellow-400 text-xs font-bold">Cycle 1</span>
+                    </div>
+                    <div class="bg-[#112240] p-4 rounded-xl space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Current Week:</span>
+                            <span id="adm-dash-week-num" class="font-bold text-white">Week 1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Active Pairs:</span>
+                            <span id="adm-dash-pairs-count" class="font-bold text-yellow-400">0 Pairs</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Cycle Winners So Far:</span>
+                            <span id="adm-dash-cycle-winners" class="font-bold text-emerald-400">0</span>
+                        </div>
+                    </div>
+                    <div class="pt-2 flex flex-col gap-2">
+                        <button onclick="advanceToNextWeek()" class="w-full py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-xs transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-forward-step"></i> Advance to Next Week (Preserves History)
+                        </button>
+                        <button onclick="switchAdminTab('draw')" class="w-full py-2.5 px-4 rounded-xl bg-[#112240] hover:bg-[#1D3557] text-white border border-white/10 font-semibold text-xs transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-dharmachakra text-yellow-400"></i> Go to Lucky Draw
+                        </button>
+                        <button type="button" onclick="saveChangesAndRefreshWebsite()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs transition flex items-center justify-center gap-2 shadow">
+                            <i class="fa-solid fa-check-double"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Winners Card -->
+                <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-yellow-400"></i> Recent Winners
+                        </h3>
+                        <button onclick="switchAdminTab('draw')" class="text-xs text-yellow-400 hover:underline">Draw History</button>
+                    </div>
+                    <div id="adm-dash-recent-winners" class="space-y-2.5"></div>
+                </div>
+
+                <!-- Active Pairs Card -->
+                <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-link text-yellow-400"></i> Active Pairs
+                        </h3>
+                        <button onclick="switchAdminTab('pairs')" class="text-xs text-yellow-400 hover:underline">Manage Pairs</button>
+                    </div>
+                    <div id="adm-dash-pairs-list" class="space-y-2.5"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: WEEKLY PAYMENTS -->
+        <div id="admin-tab-payments" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="pay-cycle-select" onchange="onPaymentCycleChange()" class="bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2 text-sm text-white outline-none"></select>
+                    <select id="pay-week-select" onchange="renderAdminPaymentsTable()" class="bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2 text-sm text-white outline-none"></select>
+                    <input type="text" id="pay-search-input" oninput="renderAdminPaymentsTable()" placeholder="Search member..." class="bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2 text-sm text-white outline-none">
+                    <select id="pay-status-filter" onchange="renderAdminPaymentsTable()" class="bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2 text-sm text-white outline-none">
+                        <option value="all">All Status</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="advanceToNextWeek()" class="px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-xs sm:text-sm transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> New Week
+                    </button>
+                    <button type="button" onclick="saveChangesAndRefreshWebsite()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs sm:text-sm transition flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-check-double"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-[#0A192F] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#112240] text-slate-300 text-xs uppercase tracking-wider border-b border-white/10">
+                                <th class="py-3.5 px-4">Member</th>
+                                <th class="py-3.5 px-4">Plan / Pair</th>
+                                <th class="py-3.5 px-4">Amount</th>
+                                <th class="py-3.5 px-4">Status</th>
+                                <th class="py-3.5 px-4">Paid Date</th>
+                                <th class="py-3.5 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adm-payments-tbody" class="divide-y divide-white/5 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MEMBERS MANAGEMENT -->
+        <div id="admin-tab-members" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-4 bg-[#0A192F] border border-white/10 rounded-2xl p-6 h-fit">
+                    <h3 id="member-form-title" class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-user-plus text-yellow-400"></i> Add New Member
+                    </h3>
+                    <form id="member-form" onsubmit="saveMemberForm(event)" class="space-y-4">
+                        <input type="hidden" id="edit-member-id">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Full Name</label>
+                            <input type="text" id="mem-name" required placeholder="e.g. Rahul Nair" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">WhatsApp Number (with country code)</label>
+                            <input type="text" id="mem-phone" required placeholder="e.g. 919847000000" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Weekly Payment Plan</label>
+                            <select id="mem-plan" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400">
+                                <option value="100">₹100 / week (Individual Unit)</option>
+                                <option value="50">₹50 / week (Pairable Member)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Notes (Optional)</label>
+                            <input type="text" id="mem-notes" placeholder="Optional note" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400">
+                        </div>
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-sm transition">
+                                <span id="member-form-btn-text">Save Member</span>
+                            </button>
+                            <button type="button" id="member-form-cancel" onclick="resetMemberForm()" class="hidden py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-8 bg-[#0A192F] border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="font-bold text-white">All Members (<span id="adm-members-count">0</span>)</h3>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="adm-member-search" oninput="renderAdminMembersTable()" placeholder="Search name or phone..." class="bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2 text-xs text-white outline-none">
+                            <button type="button" onclick="saveChangesAndRefreshWebsite()" class="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs transition flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-check-double"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-[#112240] text-slate-300 text-xs uppercase border-b border-white/10">
+                                    <th class="py-3 px-4">Member</th>
+                                    <th class="py-3 px-4">Plan</th>
+                                    <th class="py-3 px-4">Pair Status</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adm-members-tbody" class="divide-y divide-white/5 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PAIR SYSTEM -->
+        <div id="admin-tab-pairs" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-4 bg-[#0A192F] border border-white/10 rounded-2xl p-6 h-fit">
+                    <h3 id="pair-form-title" class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-link text-yellow-400"></i> Link Two ₹50 Members
+                    </h3>
+                    <form id="pair-form" onsubmit="savePairForm(event)" class="space-y-4">
+                        <input type="hidden" id="edit-pair-id">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Pair Unit Name</label>
+                            <input type="text" id="pair-name" required placeholder="e.g. Pair Unit #2" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Partner A (₹50/wk)</label>
+                            <select id="pair-member-1" required class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Partner B (₹50/wk)</label>
+                            <select id="pair-member-2" required class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Prize Sharing Arrangement</label>
+                            <input type="text" id="pair-arrangement" required value="50% / 50% Equal Prize Split" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none focus:border-yellow-400">
+                        </div>
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-sm transition">
+                                <span id="pair-form-btn-text">Create Pair</span>
+                            </button>
+                            <button type="button" id="pair-form-cancel" onclick="resetPairForm()" class="hidden py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold transition">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-8 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-lg">Active Pairs</h3>
+                        <button type="button" onclick="saveChangesAndRefreshWebsite()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs transition flex items-center gap-1.5 shadow">
+                            <i class="fa-solid fa-check-double"></i> Save Changes
+                        </button>
+                    </div>
+                    <div id="adm-pairs-container" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: LUCKY DRAW & CYCLES -->
+        <div id="admin-tab-draw" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-7 bg-[#0A192F] border border-yellow-400/30 rounded-2xl p-6 sm:p-8 text-center space-y-6">
+                    <div>
+                        <span class="px-3 py-1 rounded-full bg-yellow-400/15 text-yellow-400 text-xs font-bold uppercase">Automated Fair Draw Engine</span>
+                        <h3 id="draw-machine-subtitle" class="text-2xl font-extrabold text-white mt-2">Cycle 1 • Week 1 Draw</h3>
+                    </div>
+
+                    <div class="bg-[#040B1A] border-2 border-yellow-400/40 rounded-2xl p-6 sm:p-8 glow-yellow">
+                        <div id="draw-slot-display" class="text-2xl sm:text-4xl font-extrabold text-yellow-400 tracking-wide">READY TO SPIN</div>
+                        <p id="draw-slot-subtext" class="text-xs sm:text-sm text-slate-400 mt-2">Previous winners in this cycle are automatically excluded</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <label class="inline-flex items-center gap-2 text-xs sm:text-sm text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="draw-require-paid" checked class="rounded accent-yellow-400 w-4 h-4">
+                            Require current week payment ("Paid")
+                        </label>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button id="spin-draw-btn" onclick="executeLuckyDraw()" class="px-8 py-3.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-extrabold text-sm sm:text-base shadow-lg transition flex items-center gap-2">
+                            <i class="fa-solid fa-dharmachakra"></i> Conduct Weekly Lucky Draw
+                        </button>
+                        <button type="button" onclick="saveChangesAndRefreshWebsite()" class="px-5 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-sm transition flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-check-double"></i> Save Changes
+                        </button>
+                    </div>
+
+                    <div id="post-draw-actions" class="hidden pt-4 border-t border-white/10 space-y-3">
+                        <p class="text-xs text-emerald-400 font-semibold">Send instant Malayalam winner notification via WhatsApp:</p>
+                        <div id="post-draw-wa-buttons" class="flex flex-wrap justify-center gap-2"></div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                        <h4 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-arrows-rotate text-yellow-400"></i> Cycle Control
+                        </h4>
+                        <div class="bg-[#112240] p-4 rounded-xl text-sm space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Active Cycle:</span>
+                                <span id="cycle-box-name" class="font-bold text-white">Cycle 1</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Eligible Units Left:</span>
+                                <span id="cycle-box-eligible" class="font-bold text-yellow-400">0 Units</span>
+                            </div>
+                        </div>
+                        <button onclick="confirmStartNewCycle()" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-flag-checkered"></i> Complete Current Cycle & Start New Cycle
+                        </button>
+                    </div>
+
+                    <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-3">
+                        <h4 class="font-bold text-white text-sm">Eligible Pool (<span id="eligible-list-count">0</span>)</h4>
+                        <div id="adm-eligible-pool-list" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: WHATSAPP CENTER -->
+        <div id="admin-tab-whatsapp" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-green-400"></i> Malayalam Message Templates
+                    </h3>
+                    <p class="text-xs text-slate-400">Variables: <code class="text-yellow-400">{name}</code>, <code class="text-yellow-400">{amount}</code>, <code class="text-yellow-400">{week}</code>, <code class="text-yellow-400">{cycle}</code>, <code class="text-yellow-400">{site}</code></p>
+                    <form onsubmit="saveWhatsAppTemplates(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">1. Payment Reminder (Pending)</label>
+                            <textarea id="tpl-reminder" rows="2" class="w-full bg-[#112240] border border-white/15 rounded-xl p-2.5 text-xs text-white outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">2. Payment Confirmation (Paid Receipt)</label>
+                            <textarea id="tpl-confirmation" rows="2" class="w-full bg-[#112240] border border-white/15 rounded-xl p-2.5 text-xs text-white outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">3. Weekly Update</label>
+                            <textarea id="tpl-update" rows="2" class="w-full bg-[#112240] border border-white/15 rounded-xl p-2.5 text-xs text-white outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">4. Winner Announcement</label>
+                            <textarea id="tpl-winner" rows="2" class="w-full bg-[#112240] border border-white/15 rounded-xl p-2.5 text-xs text-white outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 mb-1">5. Important Notice</label>
+                            <textarea id="tpl-notice" rows="2" class="w-full bg-[#112240] border border-white/15 rounded-xl p-2.5 text-xs text-white outline-none"></textarea>
+                        </div>
+                        <div class="flex flex-wrap gap-2 pt-2">
+                            <button type="submit" class="flex-1 py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-xs transition">
+                                Save Templates
+                            </button>
+                            <button type="button" onclick="syncTemplatesAndSaveChanges()" class="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs transition flex items-center gap-1.5 shadow">
+                                <i class="fa-solid fa-check-double"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-7 bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="text-lg font-bold text-white">Direct Member Dispatch</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <select id="wa-dispatch-template-type" onchange="renderWhatsAppDispatchList()" class="bg-[#112240] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                                <option value="reminder">Payment Reminder</option>
+                                <option value="confirmation">Payment Receipt</option>
+                                <option value="update">Weekly Update</option>
+                                <option value="winner">Winner Announcement</option>
+                                <option value="notice">Important Notice</option>
+                            </select>
+                            <select id="wa-dispatch-filter" onchange="renderWhatsAppDispatchList()" class="bg-[#112240] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                                <option value="Pending">Pending Members</option>
+                                <option value="Paid">Paid Members</option>
+                                <option value="all">All Members</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="wa-dispatch-list" class="space-y-3 max-h-[540px] overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 7: REPORTS -->
+        <div id="admin-tab-reports" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+            <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="generateReport('weekly')" class="px-3.5 py-2 rounded-xl bg-[#112240] hover:bg-yellow-400 hover:text-[#040B1A] text-xs font-bold transition">Weekly Collection</button>
+                    <button onclick="generateReport('pending')" class="px-3.5 py-2 rounded-xl bg-[#112240] hover:bg-yellow-400 hover:text-[#040B1A] text-xs font-bold transition">Pending Payments</button>
+                    <button onclick="generateReport('members')" class="px-3.5 py-2 rounded-xl bg-[#112240] hover:bg-yellow-400 hover:text-[#040B1A] text-xs font-bold transition">Members Ledger</button>
+                    <button onclick="generateReport('winners')" class="px-3.5 py-2 rounded-xl bg-[#112240] hover:bg-yellow-400 hover:text-[#040B1A] text-xs font-bold transition">Winner History</button>
+                    <button onclick="generateReport('cycles')" class="px-3.5 py-2 rounded-xl bg-[#112240] hover:bg-yellow-400 hover:text-[#040B1A] text-xs font-bold transition">Cycles Summary</button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="exportReportCSV()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-csv"></i> Export CSV
+                    </button>
+                    <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> Print
+                    </button>
+                </div>
+            </div>
+
+            <div id="print-area" class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+                    <div>
+                        <h3 id="report-title" class="text-lg font-extrabold text-white">Weekly Collection Report</h3>
+                        <p id="report-subtitle" class="text-xs text-slate-400"></p>
+                    </div>
+                    <span id="report-summary-badge" class="px-3.5 py-1.5 rounded-xl bg-yellow-400/15 text-yellow-400 text-xs font-extrabold w-fit"></span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="report-table" class="w-full text-left border-collapse text-sm"></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 8: SITE EDITOR & SETTINGS -->
+        <div id="admin-tab-cms" class="admin-tab-content hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <form onsubmit="saveWebsiteSettings(event)" class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-white">Full Website Content & Settings Editor</h3>
+                        <p class="text-xs text-slate-400">Edit headings, notices, logos, buttons, colors, and section visibility</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-[#040B1A] font-bold text-xs transition">
+                            Save Settings
+                        </button>
+                        <button type="button" onclick="syncCmsAndSaveChanges()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#040B1A] font-extrabold text-xs transition flex items-center gap-1.5 shadow">
+                            <i class="fa-solid fa-check-double"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Website Title</label>
+                        <input type="text" id="cms-site-title" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Website Subtitle</label>
+                        <input type="text" id="cms-site-subtitle" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Brand Logo URL</label>
+                        <input type="text" id="cms-logo-url" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Primary Accent Color</label>
+                        <input type="color" id="cms-accent-color" value="#FACC15" class="w-full h-10 bg-[#112240] border border-white/15 rounded-xl px-2 py-1 cursor-pointer">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-400 mb-1">Top Announcement Notice Text</label>
+                        <input type="text" id="cms-notice-text" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-400 mb-1">Hero Main Heading</label>
+                        <input type="text" id="cms-hero-heading" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-400 mb-1">Hero Description</label>
+                        <textarea id="cms-hero-desc" rows="2" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Hero Primary Button Label</label>
+                        <input type="text" id="cms-cta1-text" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Hero Secondary Button Label</label>
+                        <input type="text" id="cms-cta2-text" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Members Section Heading</label>
+                        <input type="text" id="cms-members-heading" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Winners Section Heading</label>
+                        <input type="text" id="cms-winners-heading" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs text-slate-400 mb-1">Footer Text</label>
+                        <input type="text" id="cms-footer-text" class="w-full bg-[#112240] border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-white/10">
+                    <p class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Section Visibility Controls</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cms-show-notice" class="accent-yellow-400 w-4 h-4"> Show Top Notice
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cms-show-draw" class="accent-yellow-400 w-4 h-4"> Show Draw Banner
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cms-show-pairs" class="accent-yellow-400 w-4 h-4"> Show Pairs Section
+                        </label>
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="cms-show-winners" class="accent-yellow-400 w-4 h-4"> Show Winners History
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#0A192F] border-t border-white/10 py-6 px-4 sm:px-6 lg:px-8 mt-auto">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <p id="ui-footer-text">© 2026 Kairali Weekly Chitty & Savings Group. All rights reserved.</p>
+            <p class="text-slate-500">Transparent Weekly Savings & Automated Lucky Draw System</p>
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- FIREBASE CLOUD DATABASE & COMPLETE APPLICATION LOGIC                  -->
+    <!-- ===================================================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // -----------------------------------------------------------------
+        // 1. INITIALIZE FIREBASE & GLOBAL STATE
+        // -----------------------------------------------------------------
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'kairali-chitty-pro';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let stateDocRef = null;
+        let isAdminAuthenticated = false;
+        let currentReportType = 'weekly';
+        let isSavingToCloud = false;
+        let pendingSaveQueue = null;
+        let activeBackendMode = 'initializing'; // 'firebase' | 'backend-api' | 'memory-only'
+
+        // Default Initial State (Seeded automatically on first ever load so nothing is empty)
+        const DEFAULT_STATE = {
+            backendConfig: {
+                // Optional external backend REST endpoint (e.g. Cloudflare Worker / Node+Mongo / Supabase / Firebase REST)
+                // When configured, saves and loads permanently across any browser/reopen even outside a sandbox.
+                apiEndpoint: "",
+                apiKey: ""
+            },
+            settings: {
+                siteTitle: "Kairali Weekly Chitty",
+                siteSubtitle: "Trusted Community Savings & Lucky Draw",
+                logoUrl: "https://placehold.co/48x48/FACC15/040B1A?text=KC",
+                noticeText: "Weekly Draw takes place every Sunday at 8:00 PM! Please clear your weekly payment before 6:00 PM.",
+                heroHeading: "Smart Weekly Savings & Transparent Lucky Draw",
+                heroDesc: "Save ₹50 or ₹100 every week with complete transparency. Track live weekly payments, paired memberships, and automated weekly lucky draws in real time.",
+                cta1Text: "View Member Status",
+                cta2Text: "Winner History",
+                membersHeading: "Members & Weekly Status",
+                winnersHeading: "Lucky Draw Winners History",
+                footerText: "© 2026 Kairali Weekly Chitty & Savings Group. All rights reserved.",
+                accentColor: "#FACC15",
+                showNotice: true,
+                showDraw: true,
+                showPairs: true,
+                showWinners: true
+            },
+            templates: {
+                reminder: "നമസ്കാരം {name}, {site}-ന്റെ {cycle} (ആഴ്ച {week}) ചിട്ടി വിഹിതമായ ₹{amount} അടയ്ക്കുവാൻ ബാക്കിയുണ്ട്. നറുക്കെടുപ്പിന് മുൻപായി തുക അടച്ച് സഹകരിക്കുക. നന്ദി!",
+                confirmation: "നമസ്കാരം {name}, {site}-ന്റെ {cycle} (ആഴ്ച {week}) ചിട്ടി വിഹിതമായ ₹{amount} ലഭിച്ചിരിക്കുന്നു. പേയ്മെന്റ് 'Paid' ആയി രേഖപ്പെടുത്തിയിട്ടുണ്ട്. നന്ദി!",
+                update: "പ്രിയ {name}, {site} {cycle} - ആഴ്ച {week} അപ്‌ഡേറ്റ്: ഈ ആഴ്ചയിലെ നറുക്കെടുപ്പ് ഉടൻ നടക്കുന്നതാണ്. നിങ്ങളുടെ സ്റ്റാറ്റസ് വെബ്സൈറ്റിൽ പരിശോധിക്കാവുന്നതാണ്.",
+                winner: "അഭിനന്ദനങ്ങൾ {name}! 🎉 {site}-ന്റെ {cycle} (ആഴ്ച {week}) പ്രതിവാര നറുക്കെടുപ്പിൽ നിങ്ങൾ വിജയിയായിരിക്കുന്നു! സമ്മാനത്തുക ഉടൻ കൈമാറുന്നതാണ്.",
+                notice: "പ്രധാന അറിയിപ്പ് ({site}): പ്രിയ {name}, ഈ ആഴ്ചയിലെ ചിട്ടി വിഹിതം ₹{amount} എത്രയും വേഗം അടയ്ക്കണമെന്ന് അറിയിക്കുന്നു."
+            },
+            currentCycle: 1,
+            currentWeek: 1,
+            members: [
+                { id: "m1", name: "Arun Kumar", phone: "919847011111", plan: 100, notes: "Individual Member", pairId: null, createdAt: Date.now() },
+                { id: "m2", name: "Deepak Menon", phone: "919847022222", plan: 100, notes: "Individual Member", pairId: null, createdAt: Date.now() },
+                { id: "m3", name: "Sreelakshmi R", phone: "919847033333", plan: 50, notes: "Paired Partner A", pairId: "p1", createdAt: Date.now() },
+                { id: "m4", name: "Anjali Nair", phone: "919847044444", plan: 50, notes: "Paired Partner B", pairId: "p1", createdAt: Date.now() },
+                { id: "m5", name: "Vishnu Prasad", phone: "919847055555", plan: 50, notes: "Unpaired ₹50 Member", pairId: null, createdAt: Date.now() }
+            ],
+            pairs: [
+                {
+                    id: "p1",
+                    name: "Pair Unit #1 (Sreelakshmi & Anjali)",
+                    member1Id: "m3",
+                    member2Id: "m4",
+                    arrangement: "50% / 50% Equal Prize Split",
+                    createdAt: Date.now()
+                }
+            ],
+            // payments structure: { "C1_W1": { "m1": { status: "Paid", paidAt: "2026-11-23", amount: 100 } } }
+            payments: {
+                "C1_W1": {
+                    "m1": { status: "Paid", paidAt: "2026-11-23", amount: 100 },
+                    "m2": { status: "Pending", paidAt: null, amount: 100 },
+                    "m3": { status: "Paid", paidAt: "2026-11-23", amount: 50 },
+                    "m4": { status: "Pending", paidAt: null, amount: 50 },
+                    "m5": { status: "Pending", paidAt: null, amount: 50 }
+                }
+            },
+            winners: [],
+            cyclesHistory: [
+                { cycle: 1, startDate: new Date().toISOString().split('T')[0], status: "Active", totalWeeks: 1 }
+            ]
+        };
+
+        let appState = structuredClone(DEFAULT_STATE);
+
+        // -----------------------------------------------------------------
+        // 2. TOAST NOTIFICATIONS & CONFIRMATION MODAL HELPERS
+        // -----------------------------------------------------------------
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const styles = {
+                success: {
+                    border: 'border-emerald-500/40',
+                    bg: 'bg-[#0A192F]/95',
+                    icon: 'fa-circle-check text-emerald-400'
+                },
+                error: {
+                    border: 'border-red-500/40',
+                    bg: 'bg-[#0A192F]/95',
+                    icon: 'fa-circle-exclamation text-red-400'
+                },
+                info: {
+                    border: 'border-yellow-400/40',
+                    bg: 'bg-[#0A192F]/95',
+                    icon: 'fa-circle-info text-yellow-400'
+                }
+            };
+
+            const cfg = styles[type] || styles.info;
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto ${cfg.bg} border ${cfg.border} text-white rounded-2xl px-4 py-3.5 shadow-2xl backdrop-blur-md flex items-start gap-3 transition-all duration-300 opacity-0 translate-y-2`;
+            toast.innerHTML = `
+                <i class="fa-solid ${cfg.icon} text-lg mt-0.5 shrink-0"></i>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed flex-1">${message}</p>
+                <button type="button" aria-label="Dismiss notification" class="text-slate-400 hover:text-white text-xs p-0.5">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            const removeToast = () => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 250);
+            };
+
+            toast.querySelector('button').addEventListener('click', removeToast);
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            });
+
+            setTimeout(removeToast, 4500);
+        };
+
+        window.customConfirm = function(title, message, onConfirm) {
+            const modal = document.getElementById('confirm-modal');
+            const titleEl = document.getElementById('confirm-title');
+            const msgEl = document.getElementById('confirm-message');
+            const okBtn = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+
+            if (!modal || !titleEl || !msgEl || !okBtn || !cancelBtn) {
+                if (typeof onConfirm === 'function') onConfirm();
+                return;
+            }
+
+            titleEl.textContent = title || 'Confirm Action';
+            msgEl.textContent = message || 'Are you sure you want to proceed?';
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            const handleOk = async () => {
+                closeModal();
+                if (typeof onConfirm === 'function') {
+                    await onConfirm();
+                }
+            };
+
+            const handleCancel = () => {
+                closeModal();
+            };
+
+            okBtn.addEventListener('click', handleOk);
+            cancelBtn.addEventListener('click', handleCancel);
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        // -----------------------------------------------------------------
+        // 3. PERMANENT DATABASE SYNC ENGINE (FIRESTORE + EXTERNAL BACKEND)
+        // -----------------------------------------------------------------
+        function updateSyncBadge(modeLabel, status = 'live') {
+            const badge = document.getElementById('db-sync-badge');
+            if (!badge) return;
+            if (status === 'live') {
+                badge.className = 'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ${modeLabel}`;
+            } else if (status === 'saving') {
+                badge.className = 'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-yellow-400/10 text-yellow-300 border border-yellow-400/30';
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping"></span> Saving...`;
+            } else {
+                badge.className = 'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20';
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> ${modeLabel}`;
+            }
+        }
+
+        function normalizeLoadedState(rawObj) {
+            const merged = {
+                ...structuredClone(DEFAULT_STATE),
+                ...(rawObj || {}),
+                backendConfig: {
+                    ...structuredClone(DEFAULT_STATE.backendConfig),
+                    ...((rawObj && rawObj.backendConfig) || {})
+                },
+                settings: {
+                    ...structuredClone(DEFAULT_STATE.settings),
+                    ...((rawObj && rawObj.settings) || {})
+                },
+                templates: {
+                    ...structuredClone(DEFAULT_STATE.templates),
+                    ...((rawObj && rawObj.templates) || {})
+                },
+                members: Array.isArray(rawObj?.members) ? rawObj.members : structuredClone(DEFAULT_STATE.members),
+                pairs: Array.isArray(rawObj?.pairs) ? rawObj.pairs : structuredClone(DEFAULT_STATE.pairs),
+                payments: (rawObj?.payments && typeof rawObj.payments === 'object') ? rawObj.payments : structuredClone(DEFAULT_STATE.payments),
+                winners: Array.isArray(rawObj?.winners) ? rawObj.winners : [],
+                cyclesHistory: Array.isArray(rawObj?.cyclesHistory) && rawObj.cyclesHistory.length
+                    ? rawObj.cyclesHistory
+                    : structuredClone(DEFAULT_STATE.cyclesHistory),
+                currentCycle: Number(rawObj?.currentCycle) > 0 ? Number(rawObj.currentCycle) : 1,
+                currentWeek: Number(rawObj?.currentWeek) > 0 ? Number(rawObj.currentWeek) : 1
+            };
+            ensurePaymentRecordsForWeek(merged.currentCycle, merged.currentWeek, merged);
+            return merged;
+        }
+
+        async function saveToExternalBackendIfConfigured(stateSnapshot) {
+            const endpoint = (stateSnapshot.backendConfig?.apiEndpoint || '').trim();
+            if (!endpoint) return { attempted: false, ok: false };
+
+            const headers = { 'Content-Type': 'application/json' };
+            const apiKey = (stateSnapshot.backendConfig?.apiKey || '').trim();
+            if (apiKey) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+                headers['x-api-key'] = apiKey;
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    appId,
+                    updatedAt: Date.now(),
+                    state: stateSnapshot
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text().catch(() => `HTTP ${response.status}`);
+                throw new Error(`Backend API save failed (${response.status}): ${errText}`);
+            }
+            return { attempted: true, ok: true };
+        }
+
+        async function loadFromExternalBackendIfConfigured(currentEndpoint, currentApiKey) {
+            const endpoint = (currentEndpoint || '').trim();
+            if (!endpoint) return null;
+
+            const headers = {};
+            if ((currentApiKey || '').trim()) {
+                headers['Authorization'] = `Bearer ${currentApiKey.trim()}`;
+                headers['x-api-key'] = currentApiKey.trim();
+            }
+
+            const response = await fetch(endpoint, { method: 'GET', headers });
+            if (!response.ok) {
+                throw new Error(`Backend API load failed (${response.status})`);
+            }
+            const data = await response.json();
+            return data?.state || data?.payload || data || null;
+        }
+
+        async function persistState(successMessage = "Saved permanently to database!") {
+            // Always ensure current week payment slots exist for all members before saving
+            ensurePaymentRecordsForWeek(appState.currentCycle, appState.currentWeek, appState);
+
+            // Immediately render updated UI so changes appear right away
+            renderAll();
+
+            // Serialize inside a queue so rapid edits never overwrite each other out of order
+            if (isSavingToCloud) {
+                pendingSaveQueue = { successMessage };
+                return true;
+            }
+
+            isSavingToCloud = true;
+            updateSyncBadge('Saving...', 'saving');
+
+            let firestoreSaved = false;
+            let backendSaved = false;
+            const errors = [];
+
+            try {
+                // 1. Save to Firestore if initialized & authenticated
+                if (db && stateDocRef) {
+                    if (!auth?.currentUser) {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                            currentUser = auth.currentUser;
+                        } catch (authErr) {
+                            errors.push("Auth refresh failed: " + authErr.message);
+                        }
+                    }
+
+                    if (auth?.currentUser) {
+                        await setDoc(stateDocRef, {
+                            payload: JSON.stringify(appState),
+                            updatedAt: Date.now(),
+                            updatedBy: auth.currentUser.uid
+                        });
+                        firestoreSaved = true;
+                        activeBackendMode = 'firebase';
+                    } else {
+                        errors.push("Not authenticated with database session.");
+                    }
+                } else if (!firebaseConfig) {
+                    errors.push("Firebase environment config is not provided in this preview frame.");
+                }
+
+                // 2. Also save to configured external backend endpoint if present
+                try {
+                    const extRes = await saveToExternalBackendIfConfigured(appState);
+                    if (extRes.ok) {
+                        backendSaved = true;
+                        activeBackendMode = 'backend-api';
+                    }
+                } catch (extErr) {
+                    errors.push(extErr.message);
+                }
+
+                if (firestoreSaved || backendSaved) {
+                    updateSyncBadge(backendSaved ? 'Cloud API Synced' : 'Cloud DB Synced', 'live');
+                    if (successMessage) showToast(successMessage, "success");
+                    return true;
+                } else {
+                    updateSyncBadge('Session Only (No DB)', 'warn');
+                    showToast(
+                        "Updated in current session, but permanent cloud storage is unavailable in this preview (" +
+                        (errors[0] || "no backend connected") + "). Configure a Backend Endpoint in Site Editor for cross-reopen persistence.",
+                        "error"
+                    );
+                    return false;
+                }
+            } catch (err) {
+                console.error("Database Save Error:", err);
+                updateSyncBadge('Save Error', 'warn');
+                showToast("Error saving to database: " + err.message, "error");
+                return false;
+            } finally {
+                isSavingToCloud = false;
+                if (pendingSaveQueue) {
+                    const next = pendingSaveQueue;
+                    pendingSaveQueue = null;
+                    await persistState(next.successMessage);
+                }
+            }
+        }
+
+        async function initDatabase() {
+            ensurePaymentRecordsForWeek(appState.currentCycle, appState.currentWeek, appState);
+            renderAll();
+
+            // Check if Firebase config is provided by the host environment
+            if (!firebaseConfig) {
+                activeBackendMode = 'memory-only';
+                updateSyncBadge('Session Only (No DB)', 'warn');
+                showToast("Running in standalone preview without environment Firebase config. All edits work live; connect a Backend API in Site Editor for permanent cross-reopen storage.", "info");
+                return;
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Rule 3: Auth BEFORE queries
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUser = auth.currentUser;
+
+                // Rule 1: Strict public data path so public website & admin stay 100% synced
+                stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'chitty_system', 'master_state');
+
+                // Read existing document first so we NEVER overwrite user data with defaults on reload
+                const snap = await getDoc(stateDocRef);
+                if (snap.exists() && snap.data()?.payload) {
+                    const parsed = JSON.parse(snap.data().payload);
+                    appState = normalizeLoadedState(parsed);
+
+                    // If an external backend is configured, check if it has newer data
+                    try {
+                        const extState = await loadFromExternalBackendIfConfigured(
+                            appState.backendConfig?.apiEndpoint,
+                            appState.backendConfig?.apiKey
+                        );
+                        if (extState && typeof extState === 'object') {
+                            appState = normalizeLoadedState(extState);
+                        }
+                    } catch (extLoadErr) {
+                        console.warn("External backend read skipped:", extLoadErr.message);
+                    }
+
+                    renderAll();
+                    activeBackendMode = 'firebase';
+                    updateSyncBadge('Cloud DB Synced', 'live');
+                } else {
+                    // First-time initialization only when document does not yet exist
+                    await setDoc(stateDocRef, {
+                        payload: JSON.stringify(appState),
+                        updatedAt: Date.now(),
+                        updatedBy: currentUser?.uid || 'system'
+                    });
+                    renderAll();
+                    activeBackendMode = 'firebase';
+                    updateSyncBadge('Cloud DB Synced', 'live');
+                }
+
+                // Real-time listener with mandatory error callback
+                // Guard against overwriting while a local save is in-flight
+                onSnapshot(stateDocRef, (docSnap) => {
+                    if (isSavingToCloud || pendingSaveQueue) return;
+                    if (docSnap.exists() && docSnap.data()?.payload) {
+                        try {
+                            const parsed = JSON.parse(docSnap.data().payload);
+                            appState = normalizeLoadedState(parsed);
+                            renderAll();
+                            updateSyncBadge('Cloud DB Synced', 'live');
+                        } catch (parseErr) {
+                            console.error("State parse error:", parseErr);
+                        }
+                    }
+                }, (error) => {
+                    console.error("Firestore Snapshot Error:", error);
+                    updateSyncBadge('Sync Warning', 'warn');
+                    showToast("Sync connection warning: " + error.message, "error");
+                });
+
+            } catch (err) {
+                console.error("Init Error:", err);
+                activeBackendMode = 'memory-only';
+                updateSyncBadge('Offline / Fallback', 'warn');
+                showToast("Cloud DB connection issue: " + err.message, "error");
+                renderAll();
+            }
+        }
+
+        function ensurePaymentRecordsForWeek(cycle, week, targetState = appState) {
+            const key = `C${cycle}_W${week}`;
+            if (!targetState.payments[key] || typeof targetState.payments[key] !== 'object') {
+                targetState.payments[key] = {};
+            }
+            targetState.members.forEach(m => {
+                if (!targetState.payments[key][m.id]) {
+                    targetState.payments[key][m.id] = {
+                        status: "Pending",
+                        paidAt: null,
+                        amount: Number(m.plan)
+                    };
+                } else {
+                    // Keep amount synced with member's current plan if pending
+                    if (targetState.payments[key][m.id].status === "Pending") {
+                        targetState.payments[key][m.id].amount = Number(m.plan);
+                    }
+                }
+            });
+        }
+
+        // -----------------------------------------------------------------
+        // 4. ADMIN SECURITY & NAVIGATION (PIN: 9900)
+        // -----------------------------------------------------------------
+        window.handleAdminButtonClick = function() {
+            if (isAdminAuthenticated) {
+                const isAdminVisible = !document.getElementById('admin-view').classList.contains('hidden');
+                switchMainView(isAdminVisible ? 'public' : 'admin');
+            } else {
+                const modal = document.getElementById('admin-login-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('admin-pin-input').value = '';
+                document.getElementById('admin-login-error').classList.add('hidden');
+                setTimeout(() => document.getElementById('admin-pin-input').focus(), 100);
+            }
+        };
+
+        window.closeAdminLogin = function() {
+            const modal = document.getElementById('admin-login-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.handleAdminLogin = function(e) {
+            e.preventDefault();
+            const pin = document.getElementById('admin-pin-input').value.trim();
+            if (pin === '9900') {
+                isAdminAuthenticated = true;
+                closeAdminLogin();
+                switchMainView('admin');
+                showToast("Admin access granted!", "success");
+            } else {
+                document.getElementById('admin-login-error').classList.remove('hidden');
+            }
+        };
+
+        window.logoutAdmin = function() {
+            isAdminAuthenticated = false;
+            switchMainView('public');
+            showToast("Admin panel locked.", "info");
+        };
+
+        window.switchMainView = function(view) {
+            const pubView = document.getElementById('public-view');
+            const admView = document.getElementById('admin-view');
+            const btnText = document.getElementById('admin-btn-text');
+            const btnIcon = document.getElementById('admin-btn-icon');
+
+            if (view === 'admin' && isAdminAuthenticated) {
+                pubView.classList.add('hidden');
+                admView.classList.remove('hidden');
+                btnText.textContent = 'Public View';
+                btnIcon.className = 'fa-solid fa-globe text-xs';
+                renderAdminAll();
+            } else {
+                admView.classList.add('hidden');
+                pubView.classList.remove('hidden');
+                btnText.textContent = isAdminAuthenticated ? 'Admin Panel' : 'Admin';
+                btnIcon.className = isAdminAuthenticated ? 'fa-solid fa-sliders text-xs' : 'fa-solid fa-lock text-xs';
+                renderPublicAll();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.switchAdminTab = function(tabName) {
+            document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`admin-tab-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tabName) {
+                    btn.className = 'admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-yellow-400 text-[#040B1A] transition flex items-center gap-2';
+                } else {
+                    btn.className = 'admin-tab-btn whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-[#112240] text-slate-300 hover:text-white transition flex items-center gap-2';
+                }
+            });
+
+            if (tabName === 'reports') generateReport(currentReportType);
+            if (tabName === 'whatsapp') renderWhatsAppDispatchList();
+        };
+
+        // -----------------------------------------------------------------
+        // 5. MEMBERS MANAGEMENT (ADD, EDIT, PLAN CHANGE, DELETE WITH CONFIRM)
+        // -----------------------------------------------------------------
+        window.saveMemberForm = async function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-member-id').value;
+            const name = document.getElementById('mem-name').value.trim();
+            const phone = document.getElementById('mem-phone').value.replace(/[^0-9]/g, '');
+            const plan = Number(document.getElementById('mem-plan').value);
+            const notes = document.getElementById('mem-notes').value.trim();
+
+            if (!name || !phone) {
+                showToast("Please enter valid name and WhatsApp number.", "error");
+                return;
+            }
+
+            if (editId) {
+                const idx = appState.members.findIndex(m => m.id === editId);
+                if (idx !== -1) {
+                    const oldPlan = appState.members[idx].plan;
+                    // If member is paired and changed plan from 50 to 100, unlink pair safely
+                    if (oldPlan === 50 && plan === 100 && appState.members[idx].pairId) {
+                        const pairId = appState.members[idx].pairId;
+                        unlinkPairInternal(pairId);
+                    }
+                    appState.members[idx] = { ...appState.members[idx], name, phone, plan, notes };
+
+                    // Update current week pending amount if still pending
+                    const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+                    if (appState.payments[curKey] && appState.payments[curKey][editId]?.status === 'Pending') {
+                        appState.payments[curKey][editId].amount = plan;
+                    }
+                }
+                resetMemberForm();
+                await persistState("Member updated permanently!");
+            } else {
+                const newMember = {
+                    id: 'm_' + Date.now(),
+                    name,
+                    phone,
+                    plan,
+                    notes,
+                    pairId: null,
+                    createdAt: Date.now()
+                };
+                appState.members.push(newMember);
+                resetMemberForm();
+                await persistState("New member added permanently!");
+            }
+        };
+
+        window.editMember = function(id) {
+            const m = appState.members.find(x => x.id === id);
+            if (!m) return;
+            document.getElementById('edit-member-id').value = m.id;
+            document.getElementById('mem-name').value = m.name;
+            document.getElementById('mem-phone').value = m.phone;
+            document.getElementById('mem-plan').value = m.plan;
+            document.getElementById('mem-notes').value = m.notes || '';
+
+            document.getElementById('member-form-title').innerHTML = `<i class="fa-solid fa-user-pen text-yellow-400"></i> Edit Member`;
+            document.getElementById('member-form-btn-text').textContent = 'Update Member';
+            document.getElementById('member-form-cancel').classList.remove('hidden');
+            switchAdminTab('members');
+        };
+
+        window.resetMemberForm = function() {
+            document.getElementById('member-form').reset();
+            document.getElementById('edit-member-id').value = '';
+            document.getElementById('member-form-title').innerHTML = `<i class="fa-solid fa-user-plus text-yellow-400"></i> Add New Member`;
+            document.getElementById('member-form-btn-text').textContent = 'Save Member';
+            document.getElementById('member-form-cancel').classList.add('hidden');
+        };
+
+        window.confirmDeleteMember = function(id) {
+            const m = appState.members.find(x => x.id === id);
+            if (!m) return;
+            customConfirm(
+                "Delete Member?",
+                `Are you sure you want to permanently remove "${m.name}"? If they are in a pair, the pair will also be unlinked.`,
+                async () => {
+                    if (m.pairId) unlinkPairInternal(m.pairId);
+                    appState.members = appState.members.filter(x => x.id !== id);
+                    await persistState(`Member "${m.name}" deleted.`);
+                }
+            );
+        };
+
+        // -----------------------------------------------------------------
+        // 6. PAIR SYSTEM (LINK TWO ₹50 MEMBERS, EDIT, UNLINK)
+        // -----------------------------------------------------------------
+        function unlinkPairInternal(pairId) {
+            const pair = appState.pairs.find(p => p.id === pairId);
+            if (pair) {
+                appState.members.forEach(m => {
+                    if (m.pairId === pairId) m.pairId = null;
+                });
+                appState.pairs = appState.pairs.filter(p => p.id !== pairId);
+            }
+        }
+
+        window.savePairForm = async function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-pair-id').value;
+            const name = document.getElementById('pair-name').value.trim();
+            const m1Id = document.getElementById('pair-member-1').value;
+            const m2Id = document.getElementById('pair-member-2').value;
+            const arrangement = document.getElementById('pair-arrangement').value.trim();
+
+            if (!m1Id || !m2Id || m1Id === m2Id) {
+                showToast("Please select two different ₹50/week members.", "error");
+                return;
+            }
+
+            if (editId) {
+                // Clear old pair links first
+                appState.members.forEach(m => { if (m.pairId === editId) m.pairId = null; });
+                const idx = appState.pairs.findIndex(p => p.id === editId);
+                if (idx !== -1) {
+                    appState.pairs[idx] = { ...appState.pairs[idx], name, member1Id: m1Id, member2Id: m2Id, arrangement };
+                }
+                appState.members.forEach(m => {
+                    if (m.id === m1Id || m.id === m2Id) m.pairId = editId;
+                });
+                resetPairForm();
+                await persistState("Pair updated permanently!");
+            } else {
+                const newPairId = 'pair_' + Date.now();
+                appState.pairs.push({
+                    id: newPairId,
+                    name,
+                    member1Id: m1Id,
+                    member2Id: m2Id,
+                    arrangement,
+                    createdAt: Date.now()
+                });
+                appState.members.forEach(m => {
+                    if (m.id === m1Id || m.id === m2Id) m.pairId = newPairId;
+                });
+                resetPairForm();
+                await persistState("Members paired successfully!");
+            }
+        };
+
+        window.editPair = function(pairId) {
+            const p = appState.pairs.find(x => x.id === pairId);
+            if (!p) return;
+            populatePairDropdowns(pairId);
+            document.getElementById('edit-pair-id').value = p.id;
+            document.getElementById('pair-name').value = p.name;
+            document.getElementById('pair-member-1').value = p.member1Id;
+            document.getElementById('pair-member-2').value = p.member2Id;
+            document.getElementById('pair-arrangement').value = p.arrangement;
+
+            document.getElementById('pair-form-title').innerHTML = `<i class="fa-solid fa-pen text-yellow-400"></i> Edit Pair`;
+            document.getElementById('pair-form-btn-text').textContent = 'Update Pair';
+            document.getElementById('pair-form-cancel').classList.remove('hidden');
+        };
+
+        window.resetPairForm = function() {
+            document.getElementById('pair-form').reset();
+            document.getElementById('edit-pair-id').value = '';
+            document.getElementById('pair-form-title').innerHTML = `<i class="fa-solid fa-link text-yellow-400"></i> Link Two ₹50 Members`;
+            document.getElementById('pair-form-btn-text').textContent = 'Create Pair';
+            document.getElementById('pair-form-cancel').classList.add('hidden');
+            populatePairDropdowns();
+        };
+
+        window.confirmUnlinkPair = function(pairId) {
+            const p = appState.pairs.find(x => x.id === pairId);
+            if (!p) return;
+            customConfirm(
+                "Unlink Pair?",
+                `Are you sure you want to unlink "${p.name}"? Both members will remain active as individual ₹50 members.`,
+                async () => {
+                    unlinkPairInternal(pairId);
+                    await persistState("Pair unlinked successfully.");
+                }
+            );
+        };
+
+        function populatePairDropdowns(editingPairId = null) {
+            const s1 = document.getElementById('pair-member-1');
+            const s2 = document.getElementById('pair-member-2');
+            if (!s1 || !s2) return;
+
+            const eligible50 = appState.members.filter(m => Number(m.plan) === 50 && (!m.pairId || m.pairId === editingPairId));
+            const optionsHtml = `<option value="">-- Select ₹50 Member --</option>` +
+                eligible50.map(m => `<option value="${m.id}">${m.name} (₹50/wk)</option>`).join('');
+
+            s1.innerHTML = optionsHtml;
+            s2.innerHTML = optionsHtml;
+        }
+
+        // -----------------------------------------------------------------
+        // 7. WEEKLY PAYMENT TRACKING & HISTORY
+        // -----------------------------------------------------------------
+        window.toggleMemberPayment = async function(memberId, cycle, week) {
+            const key = `C${cycle}_W${week}`;
+            ensurePaymentRecordsForWeek(cycle, week);
+            const rec = appState.payments[key][memberId];
+            const member = appState.members.find(m => m.id === memberId);
+            if (!rec || !member) return;
+
+            if (rec.status === "Paid") {
+                rec.status = "Pending";
+                rec.paidAt = null;
+            } else {
+                rec.status = "Paid";
+                rec.paidAt = new Date().toISOString().split('T')[0];
+                rec.amount = Number(member.plan);
+            }
+
+            await persistState(`${member.name} marked as ${rec.status} for Cycle ${cycle} Week ${week}`);
+        };
+
+        window.advanceToNextWeek = function() {
+            customConfirm(
+                "Advance to Next Week?",
+                `Current Week ${appState.currentWeek} records will be safely preserved in history. Start Week ${appState.currentWeek + 1} with fresh Pending statuses for all members?`,
+                async () => {
+                    appState.currentWeek += 1;
+                    ensurePaymentRecordsForWeek(appState.currentCycle, appState.currentWeek);
+
+                    // Update cycle history metadata
+                    const cycObj = appState.cyclesHistory.find(c => c.cycle === appState.currentCycle);
+                    if (cycObj) cycObj.totalWeeks = appState.currentWeek;
+
+                    await persistState(`Started Cycle ${appState.currentCycle} - Week ${appState.currentWeek}!`);
+                }
+            );
+        };
+
+        window.onPaymentCycleChange = function() {
+            populatePaymentWeekSelector();
+            renderAdminPaymentsTable();
+        };
+
+        function populatePaymentSelectors() {
+            const cycSel = document.getElementById('pay-cycle-select');
+            if (!cycSel) return;
+
+            const cycles = new Set([appState.currentCycle]);
+            Object.keys(appState.payments).forEach(k => {
+                const match = k.match(/^C(\d+)_W(\d+)$/);
+                if (match) cycles.add(Number(match[1]));
+            });
+
+            const sortedCycles = Array.from(cycles).sort((a, b) => b - a);
+            const prevVal = Number(cycSel.value) || appState.currentCycle;
+            cycSel.innerHTML = sortedCycles.map(c => `<option value="${c}">Cycle ${c}</option>`).join('');
+            cycSel.value = sortedCycles.includes(prevVal) ? prevVal : appState.currentCycle;
+
+            populatePaymentWeekSelector();
+        }
+
+        function populatePaymentWeekSelector() {
+            const cycSel = document.getElementById('pay-cycle-select');
+            const wkSel = document.getElementById('pay-week-select');
+            if (!cycSel || !wkSel) return;
+
+            const selectedCycle = Number(cycSel.value) || appState.currentCycle;
+            const weeks = new Set();
+            if (selectedCycle === appState.currentCycle) weeks.add(appState.currentWeek);
+
+            Object.keys(appState.payments).forEach(k => {
+                const match = k.match(/^C(\d+)_W(\d+)$/);
+                if (match && Number(match[1]) === selectedCycle) {
+                    weeks.add(Number(match[2]));
+                }
+            });
+
+            const sortedWeeks = Array.from(weeks).sort((a, b) => b - a);
+            const prevWk = Number(wkSel.value);
+            wkSel.innerHTML = sortedWeeks.map(w => `<option value="${w}">Week ${w}</option>`).join('');
+            wkSel.value = sortedWeeks.includes(prevWk) ? prevWk : sortedWeeks[0];
+        }
+
+        // -----------------------------------------------------------------
+        // 8. WHATSAPP MESSAGING & MALAYALAM TEMPLATES
+        // -----------------------------------------------------------------
+        function buildWhatsAppMessage(templateKey, member, customVars = {}) {
+            const rawTpl = appState.templates[templateKey] || appState.templates.reminder;
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const rec = appState.payments[curKey]?.[member.id];
+            const amt = customVars.amount ?? (rec ? rec.amount : member.plan);
+
+            return rawTpl
+                .replace(/\{name\}/g, member.name)
+                .replace(/\{amount\}/g, amt)
+                .replace(/\{week\}/g, customVars.week ?? appState.currentWeek)
+                .replace(/\{cycle\}/g, customVars.cycle ?? `Cycle ${appState.currentCycle}`)
+                .replace(/\{site\}/g, appState.settings.siteTitle);
+        }
+
+        window.openWhatsAppForMember = function(memberId, templateKey = 'reminder') {
+            const member = appState.members.find(m => m.id === memberId);
+            if (!member) return;
+            const message = buildWhatsAppMessage(templateKey, member);
+            const cleanPhone = member.phone.replace(/[^0-9]/g, '');
+            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        };
+
+        window.saveWhatsAppTemplates = async function(e) {
+            e.preventDefault();
+            appState.templates = {
+                reminder: document.getElementById('tpl-reminder').value.trim(),
+                confirmation: document.getElementById('tpl-confirmation').value.trim(),
+                update: document.getElementById('tpl-update').value.trim(),
+                winner: document.getElementById('tpl-winner').value.trim(),
+                notice: document.getElementById('tpl-notice').value.trim()
+            };
+            await persistState("Malayalam WhatsApp templates saved!");
+        };
+
+        // -----------------------------------------------------------------
+        // 9. FAIR WEEKLY LUCKY DRAW & CYCLE SYSTEM
+        // -----------------------------------------------------------------
+        function getEligibleDrawUnits(requirePaid = true) {
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+            const cycleWinners = appState.winners.filter(w => w.cycle === appState.currentCycle);
+
+            const wonMemberIds = new Set();
+            const wonPairIds = new Set();
+            cycleWinners.forEach(w => {
+                if (w.unitType === 'pair') wonPairIds.add(w.unitId);
+                if (w.unitType === 'individual') wonMemberIds.add(w.unitId);
+                if (w.memberIds) w.memberIds.forEach(id => wonMemberIds.add(id));
+            });
+
+            const eligibleUnits = [];
+
+            // 1. Individual ₹100 members
+            appState.members.forEach(m => {
+                if (Number(m.plan) === 100 && !m.pairId && !wonMemberIds.has(m.id)) {
+                    const isPaid = weekPayments[m.id]?.status === 'Paid';
+                    if (!requirePaid || isPaid) {
+                        eligibleUnits.push({
+                            unitType: 'individual',
+                            unitId: m.id,
+                            displayName: m.name,
+                            subLabel: '₹100 Individual Member',
+                            memberIds: [m.id]
+                        });
+                    }
+                }
+            });
+
+            // 2. Active Pairs (₹50 + ₹50 = ₹100)
+            appState.pairs.forEach(p => {
+                if (!wonPairIds.has(p.id) && !wonMemberIds.has(p.member1Id) && !wonMemberIds.has(p.member2Id)) {
+                    const m1 = appState.members.find(m => m.id === p.member1Id);
+                    const m2 = appState.members.find(m => m.id === p.member2Id);
+                    if (m1 && m2) {
+                        const bothPaid = weekPayments[m1.id]?.status === 'Paid' && weekPayments[m2.id]?.status === 'Paid';
+                        if (!requirePaid || bothPaid) {
+                            eligibleUnits.push({
+                                unitType: 'pair',
+                                unitId: p.id,
+                                displayName: `${m1.name} & ${m2.name}`,
+                                subLabel: `Pair Unit (${p.arrangement})`,
+                                memberIds: [m1.id, m2.id]
+                            });
+                        }
+                    }
+                }
+            });
+
+            return eligibleUnits;
+        }
+
+        window.executeLuckyDraw = function() {
+            const requirePaid = document.getElementById('draw-require-paid').checked;
+            const pool = getEligibleDrawUnits(requirePaid);
+
+            if (pool.length === 0) {
+                showToast(
+                    requirePaid
+                        ? "No eligible PAID units remaining in this cycle! Verify payments or uncheck 'Require Paid'."
+                        : "All eligible units in this cycle have already won! Start a New Cycle.",
+                    "error"
+                );
+                return;
+            }
+
+            const spinBtn = document.getElementById('spin-draw-btn');
+            const display = document.getElementById('draw-slot-display');
+            const subtext = document.getElementById('draw-slot-subtext');
+            spinBtn.disabled = true;
+            spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            display.classList.add('slot-animate');
+
+            let ticks = 0;
+            const maxTicks = 28;
+            const interval = setInterval(async () => {
+                const randItem = pool[Math.floor(Math.random() * pool.length)];
+                display.textContent = randItem.displayName;
+                subtext.textContent = randItem.subLabel;
+                ticks++;
+
+                if (ticks >= maxTicks) {
+                    clearInterval(interval);
+                    display.classList.remove('slot-animate');
+
+                    // Cryptographically fair random selection
+                    const array = new Uint32Array(1);
+                    window.crypto.getRandomValues(array);
+                    const winnerUnit = pool[array[0] % pool.length];
+
+                    // Calculate Weekly Pot
+                    const totalPot = appState.members.reduce((sum, m) => sum + Number(m.plan), 0);
+
+                    const winnerRecord = {
+                        id: 'win_' + Date.now(),
+                        cycle: appState.currentCycle,
+                        week: appState.currentWeek,
+                        unitType: winnerUnit.unitType,
+                        unitId: winnerUnit.unitId,
+                        winnerName: winnerUnit.displayName,
+                        subLabel: winnerUnit.subLabel,
+                        memberIds: winnerUnit.memberIds,
+                        prizeAmount: totalPot,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+
+                    appState.winners.unshift(winnerRecord);
+                    display.textContent = `🎉 ${winnerUnit.displayName}`;
+                    subtext.textContent = `${winnerUnit.subLabel} • Pot: ₹${totalPot}`;
+
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                    }
+
+                    await persistState(`Congratulations to ${winnerUnit.displayName}! Winner saved.`);
+
+                    // Show instant WhatsApp Winner buttons
+                    const postActions = document.getElementById('post-draw-actions');
+                    const waBtns = document.getElementById('post-draw-wa-buttons');
+                    postActions.classList.remove('hidden');
+                    waBtns.innerHTML = winnerUnit.memberIds.map(mId => {
+                        const m = appState.members.find(x => x.id === mId);
+                        if (!m) return '';
+                        return `<button onclick="openWhatsAppForMember('${m.id}', 'winner')" class="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-xs flex items-center gap-2">
+                            <i class="fa-brands fa-whatsapp"></i> Send Winner Message to ${m.name}
+                        </button>`;
+                    }).join('');
+
+                    spinBtn.disabled = false;
+                    spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }, 90);
+        };
+
+        window.confirmStartNewCycle = function() {
+            customConfirm(
+                "Start New Chitty Cycle?",
+                `This will mark Cycle ${appState.currentCycle} as Completed and start Cycle ${appState.currentCycle + 1} (Week 1). All members become eligible for lucky draws again, and all past cycle data remains safely archived.`,
+                async () => {
+                    const oldCyc = appState.cyclesHistory.find(c => c.cycle === appState.currentCycle);
+                    if (oldCyc) oldCyc.status = "Completed";
+
+                    appState.currentCycle += 1;
+                    appState.currentWeek = 1;
+                    appState.cyclesHistory.push({
+                        cycle: appState.currentCycle,
+                        startDate: new Date().toISOString().split('T')[0],
+                        status: "Active",
+                        totalWeeks: 1
+                    });
+
+                    ensurePaymentRecordsForWeek(appState.currentCycle, 1);
+                    document.getElementById('draw-slot-display').textContent = "READY TO SPIN";
+                    document.getElementById('post-draw-actions').classList.add('hidden');
+
+                    await persistState(`Cycle ${appState.currentCycle} started successfully!`);
+                }
+            );
+        };
+
+        // -----------------------------------------------------------------
+        // 10. FULL WEBSITE CMS & SETTINGS SAVE
+        // -----------------------------------------------------------------
+        function collectCmsSettingsFromForm() {
+            const existingBackend = appState.backendConfig || { apiEndpoint: "", apiKey: "" };
+            appState.settings = {
+                siteTitle: document.getElementById('cms-site-title').value.trim() || "Kairali Weekly Chitty",
+                siteSubtitle: document.getElementById('cms-site-subtitle').value.trim(),
+                logoUrl: document.getElementById('cms-logo-url').value.trim() || "https://placehold.co/48x48/FACC15/040B1A?text=KC",
+                noticeText: document.getElementById('cms-notice-text').value.trim(),
+                heroHeading: document.getElementById('cms-hero-heading').value.trim(),
+                heroDesc: document.getElementById('cms-hero-desc').value.trim(),
+                cta1Text: document.getElementById('cms-cta1-text').value.trim(),
+                cta2Text: document.getElementById('cms-cta2-text').value.trim(),
+                membersHeading: document.getElementById('cms-members-heading').value.trim(),
+                winnersHeading: document.getElementById('cms-winners-heading').value.trim(),
+                footerText: document.getElementById('cms-footer-text').value.trim(),
+                accentColor: document.getElementById('cms-accent-color').value,
+                showNotice: document.getElementById('cms-show-notice').checked,
+                showDraw: document.getElementById('cms-show-draw').checked,
+                showPairs: document.getElementById('cms-show-pairs').checked,
+                showWinners: document.getElementById('cms-show-winners').checked
+            };
+            appState.backendConfig = existingBackend;
+        }
+
+        function collectTemplatesFromForm() {
+            appState.templates = {
+                reminder: document.getElementById('tpl-reminder').value.trim(),
+                confirmation: document.getElementById('tpl-confirmation').value.trim(),
+                update: document.getElementById('tpl-update').value.trim(),
+                winner: document.getElementById('tpl-winner').value.trim(),
+                notice: document.getElementById('tpl-notice').value.trim()
+            };
+        }
+
+        window.saveChangesAndRefreshWebsite = async function() {
+            if (document.getElementById('cms-site-title')) {
+                collectCmsSettingsFromForm();
+            }
+            if (document.getElementById('tpl-reminder')) {
+                collectTemplatesFromForm();
+            }
+            renderAll();
+            await persistState("Save Changes completed! Full website updated.");
+        };
+
+        window.syncTemplatesAndSaveChanges = async function() {
+            collectTemplatesFromForm();
+            renderWhatsAppDispatchList();
+            await persistState("Save Changes completed! WhatsApp & website updated.");
+        };
+
+        window.syncCmsAndSaveChanges = async function() {
+            collectCmsSettingsFromForm();
+            renderAll();
+            await persistState("Save Changes completed! Full website updated.");
+        };
+
+        window.saveWebsiteSettings = async function(e) {
+            e.preventDefault();
+            collectCmsSettingsFromForm();
+            await persistState("All website edits & settings saved permanently!");
+        };
+
+        // -----------------------------------------------------------------
+        // 11. REPORTS ENGINE & CSV EXPORT
+        // -----------------------------------------------------------------
+        let lastGeneratedReportRows = [];
+
+        window.generateReport = function(type) {
+            currentReportType = type;
+            const table = document.getElementById('report-table');
+            const titleEl = document.getElementById('report-title');
+            const subEl = document.getElementById('report-subtitle');
+            const badgeEl = document.getElementById('report-summary-badge');
+
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+
+            let headers = [];
+            let rows = [];
+
+            if (type === 'weekly') {
+                titleEl.textContent = `Weekly Collection Report — Cycle ${appState.currentCycle}, Week ${appState.currentWeek}`;
+                let totalCollected = 0;
+                headers = ["Member Name", "Phone", "Plan", "Status", "Amount", "Paid Date"];
+                appState.members.forEach(m => {
+                    const rec = weekPayments[m.id] || { status: "Pending", amount: m.plan, paidAt: "-" };
+                    if (rec.status === "Paid") totalCollected += Number(rec.amount);
+                    rows.push([m.name, m.phone, `₹${m.plan}`, rec.status, `₹${rec.amount}`, rec.paidAt || "-"]);
+                });
+                badgeEl.textContent = `Collected: ₹${totalCollected}`;
+            } else if (type === 'pending') {
+                titleEl.textContent = `Pending Payments Report — Cycle ${appState.currentCycle}, Week ${appState.currentWeek}`;
+                let totalPending = 0;
+                headers = ["Member Name", "Phone", "Plan", "Pending Amount", "Pair Status"];
+                appState.members.forEach(m => {
+                    const rec = weekPayments[m.id] || { status: "Pending", amount: m.plan };
+                    if (rec.status === "Pending") {
+                        totalPending += Number(rec.amount);
+                        const pair = m.pairId ? appState.pairs.find(p => p.id === m.pairId)?.name : "Individual";
+                        rows.push([m.name, m.phone, `₹${m.plan}`, `₹${rec.amount}`, pair]);
+                    }
+                });
+                badgeEl.textContent = `Total Pending: ₹${totalPending}`;
+            } else if (type === 'members') {
+                titleEl.textContent = "Complete Member Ledger Report";
+                headers = ["ID", "Name", "WhatsApp", "Weekly Plan", "Pair Unit", "Cycle Wins"];
+                appState.members.forEach(m => {
+                    const pair = m.pairId ? appState.pairs.find(p => p.id === m.pairId)?.name : "None";
+                    const wins = appState.winners.filter(w => w.memberIds?.includes(m.id)).length;
+                    rows.push([m.id, m.name, m.phone, `₹${m.plan}`, pair, `${wins} Win(s)`]);
+                });
+                badgeEl.textContent = `${appState.members.length} Total Members`;
+            } else if (type === 'winners') {
+                titleEl.textContent = "Lucky Draw Winners History Report";
+                headers = ["Cycle", "Week", "Winner Name", "Unit Type", "Prize Amount", "Date"];
+                appState.winners.forEach(w => {
+                    rows.push([`Cycle ${w.cycle}`, `Week ${w.week}`, w.winnerName, w.subLabel, `₹${w.prizeAmount}`, w.date]);
+                });
+                badgeEl.textContent = `${appState.winners.length} Draws Completed`;
+            } else if (type === 'cycles') {
+                titleEl.textContent = "Chitty Cycles Summary Report";
+                headers = ["Cycle #", "Start Date", "Status", "Weeks Recorded", "Winners Count"];
+                appState.cyclesHistory.forEach(c => {
+                    const winCount = appState.winners.filter(w => w.cycle === c.cycle).length;
+                    rows.push([`Cycle ${c.cycle}`, c.startDate, c.status, `${c.totalWeeks} Weeks`, `${winCount} Winners`]);
+                });
+                badgeEl.textContent = `${appState.cyclesHistory.length} Total Cycles`;
+            }
+
+            subEl.textContent = `Report Date: ${new Date().toLocaleDateString()} • ${appState.settings.siteTitle}`;
+            lastGeneratedReportRows = [headers, ...rows];
+
+            table.innerHTML = `
+                <thead>
+                    <tr class="bg-[#112240] text-slate-300 text-xs uppercase border-b border-white/10">
+                        ${headers.map(h => `<th class="py-3 px-4">${h}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    ${rows.length ? rows.map(r => `<tr>${r.map(cell => `<td class="py-3 px-4 text-slate-200">${cell}</td>`).join('')}</tr>`).join('')
+                    : `<tr><td colspan="${headers.length}" class="py-6 text-center text-slate-400">No records found for this report.</td></tr>`}
+                </tbody>
+            `;
+        };
+
+        window.exportReportCSV = function() {
+            if (!lastGeneratedReportRows.length) return;
+            const csv = lastGeneratedReportRows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chitty_${currentReportType}_report.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Report exported to CSV!", "success");
+        };
+
+        // -----------------------------------------------------------------
+        // 12. RENDER ALL UI VIEWS (PUBLIC & ADMIN)
+        // -----------------------------------------------------------------
+        function renderAll() {
+            applyWebsiteSettingsToUI();
+            renderPublicAll();
+            if (isAdminAuthenticated) renderAdminAll();
+        }
+
+        function applyWebsiteSettingsToUI() {
+            const s = appState.settings;
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+            const setHtml = (id, html) => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            };
+            const toggleHidden = (id, shouldHide) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', shouldHide);
+            };
+
+            document.title = s.siteTitle;
+            setText('ui-site-title', s.siteTitle);
+            setText('ui-site-subtitle', s.siteSubtitle);
+            const logoEl = document.getElementById('ui-brand-logo');
+            if (logoEl) logoEl.src = s.logoUrl;
+            setText('ui-notice-text', s.noticeText);
+            setText('ui-hero-heading', s.heroHeading);
+            setText('ui-hero-desc', s.heroDesc);
+            setHtml('ui-hero-cta1', `<i class="fa-solid fa-users"></i> ${s.cta1Text}`);
+            setHtml('ui-hero-cta2', `<i class="fa-solid fa-trophy text-yellow-400"></i> ${s.cta2Text}`);
+            setText('ui-members-heading', s.membersHeading);
+            setHtml('ui-winners-heading', `<i class="fa-solid fa-trophy text-yellow-400"></i> ${s.winnersHeading}`);
+            setText('ui-footer-text', s.footerText);
+
+            // Apply editable primary accent color dynamically across key elements
+            const accent = s.accentColor || '#FACC15';
+            document.documentElement.style.setProperty('--chitty-accent', accent);
+            const cta1 = document.getElementById('ui-hero-cta1');
+            const noticeBar = document.getElementById('top-notice-bar');
+            if (cta1) cta1.style.backgroundColor = accent;
+            if (noticeBar) noticeBar.style.backgroundColor = accent;
+
+            // Section visibility
+            toggleHidden('top-notice-bar', !s.showNotice);
+            toggleHidden('draw-section', !s.showDraw);
+            toggleHidden('pairs-section', !s.showPairs);
+            toggleHidden('winners-section', !s.showWinners);
+
+            // Cycle & Week Badges
+            setText('ui-cycle-badge', `Cycle ${appState.currentCycle} • Week ${appState.currentWeek} Active`);
+            setText('ui-card-week-title', `Cycle ${appState.currentCycle} - Week ${appState.currentWeek}`);
+        }
+
+        function renderPublicAll() {
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+
+            let paidCount = 0;
+            let pendingCount = 0;
+            let collectedAmt = 0;
+            let expectedAmt = 0;
+
+            appState.members.forEach(m => {
+                const plan = Number(m.plan) || 0;
+                expectedAmt += plan;
+                const rec = weekPayments[m.id] || { status: 'Pending', amount: plan };
+                if (rec.status === 'Paid') {
+                    paidCount++;
+                    collectedAmt += Number(rec.amount || plan);
+                } else {
+                    pendingCount++;
+                }
+            });
+
+            const pct = expectedAmt > 0 ? Math.round((collectedAmt / expectedAmt) * 100) : 0;
+
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setText('pub-stat-total-members', appState.members.length);
+            setText('pub-stat-weekly-pot', `₹${expectedAmt}`);
+            setText('pub-stat-paid-count', paidCount);
+            setText('pub-stat-pending-count', pendingCount);
+            setText('pub-stat-progress-text', `${pct}%`);
+
+            const bar = document.getElementById('pub-stat-progress-bar');
+            if (bar) bar.style.width = `${pct}%`;
+
+            // Latest winner spotlight
+            const latestWinner = appState.winners[0];
+            if (latestWinner) {
+                setText('pub-latest-winner-name', latestWinner.winnerName);
+                setText('pub-latest-winner-meta', `Cycle ${latestWinner.cycle} • Week ${latestWinner.week} • ${latestWinner.subLabel} • Prize: ₹${latestWinner.prizeAmount} (${latestWinner.date})`);
+            } else {
+                setText('pub-latest-winner-name', 'No Winner Drawn Yet');
+                setText('pub-latest-winner-meta', 'Stay tuned for the upcoming weekly lucky draw!');
+            }
+
+            const eligiblePool = getEligibleDrawUnits(false);
+            setText('pub-eligible-pool-count', eligiblePool.length);
+
+            renderPublicMembers();
+            renderPublicPairs();
+            renderPublicWinners();
+        }
+
+        window.renderPublicMembers = function() {
+            const grid = document.getElementById('pub-members-grid');
+            if (!grid) return;
+
+            const search = (document.getElementById('pub-member-search')?.value || '').toLowerCase().trim();
+            const filter = document.getElementById('pub-member-filter')?.value || 'all';
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+
+            const filtered = appState.members.filter(m => {
+                const rec = weekPayments[m.id] || { status: 'Pending' };
+                if (search && !m.name.toLowerCase().includes(search)) return false;
+                if (filter === 'Paid' && rec.status !== 'Paid') return false;
+                if (filter === 'Pending' && rec.status !== 'Pending') return false;
+                if (filter === '100' && Number(m.plan) !== 100) return false;
+                if (filter === '50' && Number(m.plan) !== 50) return false;
+                if (filter === 'paired' && !m.pairId) return false;
+                return true;
+            });
+
+            if (!filtered.length) {
+                grid.innerHTML = `<div class="col-span-full bg-[#0A192F] border border-white/10 rounded-2xl p-8 text-center text-slate-400 text-sm">No members match your filter criteria.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(m => {
+                const rec = weekPayments[m.id] || { status: 'Pending', amount: m.plan, paidAt: null };
+                const isPaid = rec.status === 'Paid';
+                const pairObj = m.pairId ? appState.pairs.find(p => p.id === m.pairId) : null;
+                const wonThisCycle = appState.winners.some(w => w.cycle === appState.currentCycle && w.memberIds?.includes(m.id));
+
+                return `
+                    <div class="bg-[#0A192F] border ${isPaid ? 'border-emerald-500/30' : 'border-white/10'} rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-lg hover:border-yellow-400/40 transition">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-bold text-white text-base">${m.name}</h4>
+                                    ${wonThisCycle ? `<span class="px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 text-[10px] font-bold"><i class="fa-solid fa-crown mr-1"></i>Cycle Winner</span>` : ''}
+                                </div>
+                                <p class="text-xs text-slate-400 mt-1">
+                                    Plan: <span class="text-yellow-400 font-semibold">₹${m.plan}/week</span>
+                                    ${pairObj ? ` • <span class="text-blue-300"><i class="fa-solid fa-link text-[10px]"></i> ${pairObj.name}</span>` : ''}
+                                </p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${isPaid ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'}">
+                                ${isPaid ? 'Paid' : 'Pending'}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-white/5 text-xs text-slate-400">
+                            <span>${isPaid && rec.paidAt ? `Paid on ${rec.paidAt}` : `Due: ₹${m.plan}`}</span>
+                            <button type="button" onclick="openWhatsAppForMember('${m.id}', '${isPaid ? 'confirmation' : 'reminder'}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-600/20 hover:bg-green-600 text-green-300 hover:text-white border border-green-500/30 font-semibold transition">
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        function renderPublicPairs() {
+            const grid = document.getElementById('pub-pairs-grid');
+            if (!grid) return;
+
+            if (!appState.pairs.length) {
+                grid.innerHTML = `<div class="col-span-full bg-[#0A192F] border border-white/10 rounded-2xl p-8 text-center text-slate-400 text-sm">No paired members configured yet.</div>`;
+                return;
+            }
+
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+
+            grid.innerHTML = appState.pairs.map(p => {
+                const m1 = appState.members.find(m => m.id === p.member1Id);
+                const m2 = appState.members.find(m => m.id === p.member2Id);
+                const s1 = m1 ? (weekPayments[m1.id]?.status || 'Pending') : 'Pending';
+                const s2 = m2 ? (weekPayments[m2.id]?.status || 'Pending') : 'Pending';
+                const pairWins = appState.winners.filter(w => w.unitId === p.id);
+
+                return `
+                    <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 space-y-4 shadow-lg">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <h4 class="font-bold text-white text-base">${p.name}</h4>
+                                <p class="text-xs text-yellow-400 mt-0.5">${p.arrangement}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${s1 === 'Paid' && s2 === 'Paid' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}">
+                                ${s1 === 'Paid' && s2 === 'Paid' ? 'Unit Paid (₹100)' : 'Partial / Pending'}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="bg-[#112240] p-3.5 rounded-xl flex items-center justify-between">
+                                <span class="font-semibold text-white">${m1 ? m1.name : 'Unknown'} (₹50)</span>
+                                <span class="${s1 === 'Paid' ? 'text-emerald-400' : 'text-amber-400'} font-bold">${s1}</span>
+                            </div>
+                            <div class="bg-[#112240] p-3.5 rounded-xl flex items-center justify-between">
+                                <span class="font-semibold text-white">${m2 ? m2.name : 'Unknown'} (₹50)</span>
+                                <span class="${s2 === 'Paid' ? 'text-emerald-400' : 'text-amber-400'} font-bold">${s2}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-400 pt-1">
+                            Winning History: <span class="text-slate-200 font-medium">${pairWins.length ? pairWins.map(w => `Cycle ${w.cycle} Wk ${w.week} (₹${w.prizeAmount})`).join(', ') : 'No wins yet'}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.renderPublicWinners = function() {
+            const tbody = document.getElementById('pub-winners-tbody');
+            const filterSel = document.getElementById('pub-winner-cycle-filter');
+            if (!tbody) return;
+
+            if (filterSel) {
+                const currentSel = filterSel.value || 'all';
+                const cycles = Array.from(new Set(appState.winners.map(w => w.cycle))).sort((a, b) => b - a);
+                filterSel.innerHTML = `<option value="all">All Cycles</option>` +
+                    cycles.map(c => `<option value="${c}">Cycle ${c}</option>`).join('');
+                filterSel.value = (currentSel === 'all' || cycles.includes(Number(currentSel))) ? currentSel : 'all';
+            }
+
+            const selectedCycle = filterSel ? filterSel.value : 'all';
+            const list = selectedCycle === 'all'
+                ? appState.winners
+                : appState.winners.filter(w => String(w.cycle) === String(selectedCycle));
+
+            if (!list.length) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 px-5 text-center text-slate-400">No lucky draw winners recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(w => `
+                <tr class="hover:bg-white/[0.02]">
+                    <td class="py-4 px-5 font-semibold text-yellow-400">Cycle ${w.cycle} • Week ${w.week}</td>
+                    <td class="py-4 px-5 font-bold text-white">${w.winnerName}</td>
+                    <td class="py-4 px-5 text-slate-300">${w.subLabel}</td>
+                    <td class="py-4 px-5 font-bold text-emerald-400">₹${w.prizeAmount}</td>
+                    <td class="py-4 px-5 text-slate-400">${w.date}</td>
+                </tr>
+            `).join('');
+        };
+
+        function renderAdminAll() {
+            renderAdminDashboard();
+            populatePaymentSelectors();
+            renderAdminPaymentsTable();
+            renderAdminMembersTable();
+            populatePairDropdowns(document.getElementById('edit-pair-id')?.value || null);
+            renderAdminPairsList();
+            renderAdminDrawPanel();
+            renderWhatsAppDispatchList();
+            generateReport(currentReportType);
+            populateAdminForms();
+        }
+
+        function renderAdminDashboard() {
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+
+            let count100 = 0;
+            let count50 = 0;
+            let paidMembers = 0;
+            let pendingMembers = 0;
+            let collectedAmt = 0;
+            let expectedAmt = 0;
+
+            appState.members.forEach(m => {
+                const plan = Number(m.plan) || 0;
+                if (plan === 100) count100++;
+                else count50++;
+                expectedAmt += plan;
+
+                const rec = weekPayments[m.id] || { status: 'Pending', amount: plan };
+                if (rec.status === 'Paid') {
+                    paidMembers++;
+                    collectedAmt += Number(rec.amount || plan);
+                } else {
+                    pendingMembers++;
+                }
+            });
+
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setText('adm-kpi-total-members', appState.members.length);
+            setText('adm-kpi-member-breakdown', `${count100} ₹100 • ${count50} ₹50`);
+            setText('adm-kpi-paid-members', paidMembers);
+            setText('adm-kpi-pending-members', pendingMembers);
+            setText('adm-kpi-collected-amt', `₹${collectedAmt}`);
+            setText('adm-kpi-expected-amt', `Out of ₹${expectedAmt} target`);
+            setText('adm-kpi-pending-amt', `₹${Math.max(0, expectedAmt - collectedAmt)}`);
+
+            setText('adm-dash-cycle-badge', `Cycle ${appState.currentCycle}`);
+            setText('adm-dash-week-num', `Week ${appState.currentWeek}`);
+            setText('adm-dash-pairs-count', `${appState.pairs.length} Pairs`);
+            const cycleWins = appState.winners.filter(w => w.cycle === appState.currentCycle);
+            setText('adm-dash-cycle-winners', cycleWins.length);
+
+            const recentWinnersEl = document.getElementById('adm-dash-recent-winners');
+            if (recentWinnersEl) {
+                recentWinnersEl.innerHTML = appState.winners.length
+                    ? appState.winners.slice(0, 4).map(w => `
+                        <div class="bg-[#112240] p-3 rounded-xl flex items-center justify-between text-xs">
+                            <div>
+                                <p class="font-bold text-white">${w.winnerName}</p>
+                                <p class="text-slate-400">Cycle ${w.cycle} • Week ${w.week}</p>
+                            </div>
+                            <span class="font-bold text-yellow-400">₹${w.prizeAmount}</span>
+                        </div>
+                    `).join('')
+                    : `<p class="text-xs text-slate-400">No winners drawn yet.</p>`;
+            }
+
+            const pairsListEl = document.getElementById('adm-dash-pairs-list');
+            if (pairsListEl) {
+                pairsListEl.innerHTML = appState.pairs.length
+                    ? appState.pairs.slice(0, 4).map(p => `
+                        <div class="bg-[#112240] p-3 rounded-xl text-xs">
+                            <p class="font-bold text-white">${p.name}</p>
+                            <p class="text-slate-400 mt-0.5">${p.arrangement}</p>
+                        </div>
+                    `).join('')
+                    : `<p class="text-xs text-slate-400">No pairs linked yet.</p>`;
+            }
+        }
+
+        window.renderAdminPaymentsTable = function() {
+            const tbody = document.getElementById('adm-payments-tbody');
+            if (!tbody) return;
+
+            const cyc = Number(document.getElementById('pay-cycle-select')?.value) || appState.currentCycle;
+            const wk = Number(document.getElementById('pay-week-select')?.value) || appState.currentWeek;
+            const search = (document.getElementById('pay-search-input')?.value || '').toLowerCase().trim();
+            const statusFilter = document.getElementById('pay-status-filter')?.value || 'all';
+
+            const key = `C${cyc}_W${wk}`;
+            ensurePaymentRecordsForWeek(cyc, wk);
+            const weekPayments = appState.payments[key] || {};
+
+            const rows = appState.members.filter(m => {
+                const rec = weekPayments[m.id] || { status: 'Pending' };
+                if (search && !m.name.toLowerCase().includes(search)) return false;
+                if (statusFilter !== 'all' && rec.status !== statusFilter) return false;
+                return true;
+            });
+
+            if (!rows.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">No payment records found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rows.map(m => {
+                const rec = weekPayments[m.id] || { status: 'Pending', amount: m.plan, paidAt: null };
+                const isPaid = rec.status === 'Paid';
+                const pair = m.pairId ? appState.pairs.find(p => p.id === m.pairId) : null;
+
+                return `
+                    <tr class="hover:bg-white/[0.02]">
+                        <td class="py-3.5 px-4">
+                            <p class="font-bold text-white">${m.name}</p>
+                            <p class="text-xs text-slate-400">+${m.phone}</p>
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-slate-300">
+                            ₹${m.plan}/wk ${pair ? `<span class="block text-yellow-400">${pair.name}</span>` : ''}
+                        </td>
+                        <td class="py-3.5 px-4 font-bold text-white">₹${rec.amount || m.plan}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${isPaid ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}">
+                                ${rec.status}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-slate-400">${rec.paidAt || '-'}</td>
+                        <td class="py-3.5 px-4 text-right space-x-1.5">
+                            <button type="button" onclick="toggleMemberPayment('${m.id}', ${cyc}, ${wk})"
+                                class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${isPaid ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-emerald-500 hover:bg-emerald-400 text-[#040B1A]'}">
+                                ${isPaid ? 'Mark Pending' : 'Mark Paid'}
+                            </button>
+                            <button type="button" onclick="openWhatsAppForMember('${m.id}', '${isPaid ? 'confirmation' : 'reminder'}')"
+                                class="px-2.5 py-1.5 rounded-xl bg-green-600/20 hover:bg-green-600 text-green-300 hover:text-white text-xs font-semibold transition">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        window.renderAdminMembersTable = function() {
+            const tbody = document.getElementById('adm-members-tbody');
+            const countEl = document.getElementById('adm-members-count');
+            if (!tbody) return;
+
+            const search = (document.getElementById('adm-member-search')?.value || '').toLowerCase().trim();
+            const list = appState.members.filter(m =>
+                !search || m.name.toLowerCase().includes(search) || String(m.phone).includes(search)
+            );
+
+            if (countEl) countEl.textContent = appState.members.length;
+
+            if (!list.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400">No members found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map(m => {
+                const pair = m.pairId ? appState.pairs.find(p => p.id === m.pairId) : null;
+                return `
+                    <tr class="hover:bg-white/[0.02]">
+                        <td class="py-3.5 px-4">
+                            <p class="font-bold text-white">${m.name}</p>
+                            <p class="text-xs text-slate-400">+${m.phone}${m.notes ? ` • ${m.notes}` : ''}</p>
+                        </td>
+                        <td class="py-3.5 px-4 font-bold text-yellow-400">₹${m.plan}/wk</td>
+                        <td class="py-3.5 px-4 text-xs text-slate-300">${pair ? pair.name : 'Individual'}</td>
+                        <td class="py-3.5 px-4 text-right space-x-1.5">
+                            <button type="button" onclick="openWhatsAppForMember('${m.id}', 'reminder')" class="px-2.5 py-1.5 rounded-xl bg-green-600/20 hover:bg-green-600 text-green-300 hover:text-white text-xs">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </button>
+                            <button type="button" onclick="editMember('${m.id}')" class="px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white text-xs font-semibold">
+                                Edit
+                            </button>
+                            <button type="button" onclick="confirmDeleteMember('${m.id}')" class="px-2.5 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white text-xs font-semibold">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        function renderAdminPairsList() {
+            const container = document.getElementById('adm-pairs-container');
+            if (!container) return;
+
+            if (!appState.pairs.length) {
+                container.innerHTML = `<div class="bg-[#0A192F] border border-white/10 rounded-2xl p-6 text-center text-slate-400 text-sm">No pairs created yet. Use the form on the left to link two ₹50 members.</div>`;
+                return;
+            }
+
+            container.innerHTML = appState.pairs.map(p => {
+                const m1 = appState.members.find(m => m.id === p.member1Id);
+                const m2 = appState.members.find(m => m.id === p.member2Id);
+                return `
+                    <div class="bg-[#0A192F] border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h4 class="font-bold text-white text-base">${p.name}</h4>
+                            <p class="text-xs text-slate-300 mt-1">
+                                Partners: <span class="text-yellow-400 font-semibold">${m1 ? m1.name : 'Missing'}</span> + <span class="text-yellow-400 font-semibold">${m2 ? m2.name : 'Missing'}</span>
+                            </p>
+                            <p class="text-xs text-slate-400 mt-0.5">Arrangement: ${p.arrangement}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="editPair('${p.id}')" class="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white text-xs font-semibold transition">
+                                Edit
+                            </button>
+                            <button type="button" onclick="confirmUnlinkPair('${p.id}')" class="px-3.5 py-2 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white text-xs font-semibold transition">
+                                Unlink
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAdminDrawPanel() {
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+            };
+
+            setText('draw-machine-subtitle', `Cycle ${appState.currentCycle} • Week ${appState.currentWeek} Draw`);
+            setText('cycle-box-name', `Cycle ${appState.currentCycle}`);
+
+            const eligibleAll = getEligibleDrawUnits(false);
+            setText('cycle-box-eligible', `${eligibleAll.length} Units`);
+            setText('eligible-list-count', eligibleAll.length);
+
+            const listEl = document.getElementById('adm-eligible-pool-list');
+            if (listEl) {
+                listEl.innerHTML = eligibleAll.length
+                    ? eligibleAll.map(u => `
+                        <div class="bg-[#112240] p-2.5 rounded-xl flex items-center justify-between">
+                            <span class="font-semibold text-white">${u.displayName}</span>
+                            <span class="text-slate-400">${u.unitType === 'pair' ? 'Pair (₹100)' : '₹100'}</span>
+                        </div>
+                    `).join('')
+                    : `<p class="text-slate-400">No eligible units left in Cycle ${appState.currentCycle}.</p>`;
+            }
+        }
+
+        window.renderWhatsAppDispatchList = function() {
+            const container = document.getElementById('wa-dispatch-list');
+            if (!container) return;
+
+            const tplType = document.getElementById('wa-dispatch-template-type')?.value || 'reminder';
+            const filter = document.getElementById('wa-dispatch-filter')?.value || 'Pending';
+            const curKey = `C${appState.currentCycle}_W${appState.currentWeek}`;
+            const weekPayments = appState.payments[curKey] || {};
+
+            const members = appState.members.filter(m => {
+                const status = weekPayments[m.id]?.status || 'Pending';
+                if (filter !== 'all' && status !== filter) return false;
+                return true;
+            });
+
+            if (!members.length) {
+                container.innerHTML = `<div class="bg-[#112240] rounded-xl p-6 text-center text-slate-400 text-xs">No members match the selected filter.</div>`;
+                return;
+            }
+
+            container.innerHTML = members.map(m => {
+                const status = weekPayments[m.id]?.status || 'Pending';
+                const preview = buildWhatsAppMessage(tplType, m);
+                return `
+                    <div class="bg-[#112240] border border-white/10 rounded-xl p-4 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <p class="font-bold text-white text-sm">${m.name} <span class="text-xs font-normal text-slate-400">(+${m.phone})</span></p>
+                                <span class="text-[11px] font-semibold ${status === 'Paid' ? 'text-emerald-400' : 'text-amber-400'}">${status} • ₹${m.plan}</span>
+                            </div>
+                            <button type="button" onclick="openWhatsAppForMember('${m.id}', '${tplType}')"
+                                class="px-3.5 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-xs flex items-center gap-1.5 transition shrink-0">
+                                <i class="fa-brands fa-whatsapp"></i> Send WhatsApp
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-300 bg-[#0A192F] p-2.5 rounded-lg border border-white/5 leading-relaxed">${preview}</p>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        function populateAdminForms() {
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.value = val ?? '';
+            };
+            const setChecked = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.checked = Boolean(val);
+            };
+
+            const t = appState.templates || {};
+            setVal('tpl-reminder', t.reminder);
+            setVal('tpl-confirmation', t.confirmation);
+            setVal('tpl-update', t.update);
+            setVal('tpl-winner', t.winner);
+            setVal('tpl-notice', t.notice);
+
+            const s = appState.settings || {};
+            setVal('cms-site-title', s.siteTitle);
+            setVal('cms-site-subtitle', s.siteSubtitle);
+            setVal('cms-logo-url', s.logoUrl);
+            setVal('cms-accent-color', s.accentColor || '#FACC15');
+            setVal('cms-notice-text', s.noticeText);
+            setVal('cms-hero-heading', s.heroHeading);
+            setVal('cms-hero-desc', s.heroDesc);
+            setVal('cms-cta1-text', s.cta1Text);
+            setVal('cms-cta2-text', s.cta2Text);
+            setVal('cms-members-heading', s.membersHeading);
+            setVal('cms-winners-heading', s.winnersHeading);
+            setVal('cms-footer-text', s.footerText);
+
+            setChecked('cms-show-notice', s.showNotice);
+            setChecked('cms-show-draw', s.showDraw);
+            setChecked('cms-show-pairs', s.showPairs);
+            setChecked('cms-show-winners', s.showWinners);
+        }
+
+        // Start database initialization when window loads
+        window.addEventListener('load', () => {
+            initDatabase();
+        });
+    </script>
+</body>
+</html>
